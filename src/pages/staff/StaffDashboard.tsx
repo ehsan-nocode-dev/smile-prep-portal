@@ -36,6 +36,10 @@ export default function StaffDashboard() {
         <StatCard label="Badges Earned" value={badges} tint="gray" icon={<Award className="h-6 w-6" />} />
       </div>
 
+      <div className="mb-8">
+        <BadgePortfolio tasks={tasks} submissions={submissions} userId={currentUserId} />
+      </div>
+
       <section className="bg-card rounded-xl card-shadow p-6">
         <h2 className="text-lg font-bold mb-4">Recent Activity</h2>
         <ul className="divide-y divide-border">
