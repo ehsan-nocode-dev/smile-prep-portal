@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
+import { useCelebration } from "@/lib/celebration";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Award, CheckCircle2, FileStack, Sparkles, Zap } from "lucide-react";
@@ -24,6 +25,7 @@ function nextBadge(badges: BadgeTier[], completed: number): { next: BadgeTier | 
 
 export default function StaffTaskLog() {
   const { tasks, submissions, addSubmission, currentUserId, members } = useStore();
+  const { celebrate } = useCelebration();
   const me = members.find((m) => m.id === currentUserId)!;
   const [tab, setTab] = useState<Tab>("all");
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
@@ -45,14 +47,16 @@ export default function StaffTaskLog() {
 
   const handleSubmit = () => {
     if (!submitFor) return;
+    const xp = submitFor.baseXp * qty;
     addSubmission({
       taskId: submitFor.id,
       taskName: submitFor.name,
       quantity: qty,
       submittedById: me.id,
       submittedByName: me.name,
-      xpEarned: submitFor.baseXp * qty,
+      xpEarned: xp,
     });
+    celebrate({ type: "submitted", taskName: submitFor.name, xp });
     setSubmitFor(null);
     setQty(1);
   };

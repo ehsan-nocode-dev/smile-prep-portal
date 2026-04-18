@@ -8,12 +8,46 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
+import { useCelebration } from "@/lib/celebration";
 import { Check, Pencil, X } from "lucide-react";
 
 export default function AdminSubmissions() {
-  const { submissions, updateSubmissionStatus, updateSubmissionQuantity, members, currentUserId } = useStore();
+  const { submissions, tasks, updateSubmissionStatus, updateSubmissionQuantity, members, currentUserId } = useStore();
+  const { celebrate } = useCelebration();
   const reviewer = members.find((m) => m.id === currentUserId)?.name || "Admin";
   const [editing, setEditing] = useState<{ id: string; quantity: number } | null>(null);
+
+  const handleApprove = (submissionId: string) => {
+    const sub = submissions.find((s) => s.id === submissionId);
+    if (!sub) return;
+
+    // Compute approved totals before vs after to detect newly crossed badge tiers
+    const task = tasks.find((t) => t.id === sub.taskId);
+    const before = submissions
+      .filter((s) => s.submittedById === sub.submittedById && s.taskId === sub.taskId && s.status === "Approved")
+      .reduce((n, s) => n + s.quantity, 0);
+    const after = before + sub.quantity;
+
+    updateSubmissionStatus(submissionId, "Approved", reviewer);
+    celebrate({ type: "approved", taskName: sub.taskName, xp: sub.xpEarned });
+
+    if (task) {
+      const newlyEarned = task.badges.filter((b) => before < b.tracks && after >= b.tracks);
+      newlyEarned.forEach((b, i) => {
+        // Stagger slightly so multiple unlocks don't render on top of each other
+        setTimeout(() => {
+          celebrate({ type: "badge", tier: b.tier, taskName: task.name, bonusXp: b.bonusXp });
+        }, 350 + i * 600);
+      });
+    }
+  };
+
+  const handleReject = (submissionId: string) => {
+    const sub = submissions.find((s) => s.id === submissionId);
+    if (!sub) return;
+    updateSubmissionStatus(submissionId, "Rejected", reviewer);
+    celebrate({ type: "rejected", taskName: sub.taskName });
+  };
 
   return (
     <div>
@@ -49,14 +83,14 @@ export default function AdminSubmissions() {
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => updateSubmissionStatus(s.id, "Approved", reviewer)}
+                      onClick={() => handleApprove(s.id)}
                       className="h-8 w-8 rounded-md bg-success/15 text-success hover:bg-success hover:text-success-foreground flex items-center justify-center"
                       title="Approve"
                     >
                       <Check className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => updateSubmissionStatus(s.id, "Rejected", reviewer)}
+                      onClick={() => handleReject(s.id)}
                       className="h-8 w-8 rounded-md bg-destructive/15 text-destructive hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center"
                       title="Reject"
                     >
