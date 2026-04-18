@@ -1,7 +1,4 @@
-import { Bluetooth as Tooth } from "lucide-react";
-
-// "Tooth" icon — Lucide doesn't ship a tooth icon by default in this version,
-// so we render a clean inline SVG matching the brand.
+// Tooth icon — Lucide doesn't ship a clean tooth glyph, so we render an inline SVG.
 export function ToothIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -18,6 +15,3 @@ export function ToothIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-// Re-export for any place importing from lucide
-export { Tooth };
