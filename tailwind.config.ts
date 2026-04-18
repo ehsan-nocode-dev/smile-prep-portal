@@ -87,11 +87,37 @@ export default {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
         "fade-in": { from: { opacity: "0", transform: "translateY(4px)" }, to: { opacity: "1", transform: "translateY(0)" } },
+        "pop-in": {
+          "0%": { opacity: "0", transform: "scale(0.85)" },
+          "60%": { opacity: "1", transform: "scale(1.04)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.45)" },
+          "50%": { boxShadow: "0 0 36px 12px hsl(var(--primary) / 0.35)" },
+        },
+        "bounce-soft": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "confetti-fall": {
+          "0%": { transform: "translate3d(0,0,0) rotate(0deg)", opacity: "1" },
+          "100%": { transform: "translate3d(var(--cx,0), var(--cy,180px), 0) rotate(var(--cr,360deg))", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
+        "pop-in": "pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "scale-in": "scale-in 0.2s ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "bounce-soft": "bounce-soft 1.4s ease-in-out infinite",
+        "confetti-fall": "confetti-fall 1.2s ease-out forwards",
       },
     },
   },
