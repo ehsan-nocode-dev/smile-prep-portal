@@ -1,16 +1,24 @@
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
+import { BadgePortfolio } from "@/components/BadgePortfolio";
 import { useStore } from "@/lib/store";
 import { FileStack, CheckCircle2, Clock, Award } from "lucide-react";
 
 export default function StaffDashboard() {
-  const { submissions, currentUserId } = useStore();
+  const { submissions, tasks, currentUserId } = useStore();
   const mine = submissions.filter((s) => s.submittedById === currentUserId);
   const total = mine.length;
   const approved = mine.filter((s) => s.status === "Approved").length;
   const pending = mine.filter((s) => s.status === "Pending").length;
-  const badges = Math.floor(approved / 2);
+
+  // Badges earned across all tasks (approved-only)
+  const approvedByTask = (taskId: string) =>
+    mine.filter((s) => s.taskId === taskId && s.status === "Approved").reduce((n, s) => n + s.quantity, 0);
+  const badges = tasks.reduce((sum, t) => {
+    const a = approvedByTask(t.id);
+    return sum + t.badges.filter((b) => a >= b.tracks).length;
+  }, 0);
 
   const recent = [...mine]
     .filter((s) => s.status === "Approved")
@@ -26,6 +34,10 @@ export default function StaffDashboard() {
         <StatCard label="Approved Submissions" value={approved} tint="green" icon={<CheckCircle2 className="h-6 w-6" />} />
         <StatCard label="Pending Submissions" value={pending} tint="yellow" icon={<Clock className="h-6 w-6" />} />
         <StatCard label="Badges Earned" value={badges} tint="gray" icon={<Award className="h-6 w-6" />} />
+      </div>
+
+      <div className="mb-8">
+        <BadgePortfolio tasks={tasks} submissions={submissions} userId={currentUserId} />
       </div>
 
       <section className="bg-card rounded-xl card-shadow p-6">
