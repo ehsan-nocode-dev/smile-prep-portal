@@ -23,6 +23,8 @@ import StaffTaskLog from "./pages/staff/StaffTaskLog";
 import StaffLeaderboard from "./pages/staff/StaffLeaderboard";
 import StaffProfile from "./pages/staff/StaffProfile";
 
+import MemberProfile from "./pages/MemberProfile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,6 +45,7 @@ const App = () => (
               <Route path="team" element={<AdminTeam />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
               <Route path="profile" element={<AdminProfile />} />
+              <Route path="members/:memberId" element={<MemberProfile />} />
             </Route>
 
             <Route path="/staff" element={<StaffLayout />}>
@@ -50,6 +53,7 @@ const App = () => (
               <Route path="tasks" element={<StaffTaskLog />} />
               <Route path="leaderboard" element={<StaffLeaderboard />} />
               <Route path="profile" element={<StaffProfile />} />
+              <Route path="members/:memberId" element={<MemberProfile />} />
             </Route>
 
             <Route path="/login" element={<Navigate to="/" replace />} />

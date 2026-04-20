@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,9 @@ type SortBy = "Total XP" | "Badges" | "Task Completed";
 
 export function LeaderboardView({ title, subtitle }: { title: string; subtitle?: string }) {
   const { members, submissions, tasks } = useStore();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const portalBase = pathname.startsWith("/admin") ? "/admin" : "/staff";
   const [period, setPeriod] = useState<Period>("Monthly");
   const [taskFilter, setTaskFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortBy>("Total XP");
@@ -95,7 +99,11 @@ export function LeaderboardView({ title, subtitle }: { title: string; subtitle?:
         {ranked.map((r, idx) => {
           const trophyColor = idx === 0 ? "text-yellow-500" : idx === 1 ? "text-gray-400" : idx === 2 ? "text-amber-700" : "text-muted-foreground";
           return (
-            <div key={r.member.id} className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
+            <button
+              key={r.member.id}
+              onClick={() => navigate(`${portalBase}/members/${r.member.id}`)}
+              className="w-full text-left bg-card rounded-xl card-shadow p-4 flex items-center gap-4 hover:bg-muted/40 hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+            >
               <div className="w-8 text-center font-bold text-muted-foreground">#{idx + 1}</div>
               <Trophy className={cn("h-6 w-6", trophyColor)} />
               <div className="h-11 w-11 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold">
@@ -109,7 +117,7 @@ export function LeaderboardView({ title, subtitle }: { title: string; subtitle?:
                 <div className="text-lg font-extrabold text-xp">{r.xp} XP</div>
                 <div className="text-xs text-muted-foreground">{r.completed} tasks · {r.badges} badges</div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
