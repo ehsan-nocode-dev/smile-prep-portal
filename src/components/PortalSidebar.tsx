@@ -1,8 +1,11 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ToothIcon } from "./ToothIcon";
-import { LogOut } from "lucide-react";
+import { LogOut, Star, Zap } from "lucide-react";
 import { ReactNode } from "react";
+import { useStore } from "@/lib/store";
+import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
+import { Progress } from "@/components/ui/progress";
 
 export interface NavItem {
   to: string;
@@ -13,6 +16,12 @@ export interface NavItem {
 
 export function PortalSidebar({ items }: { items: NavItem[] }) {
   const navigate = useNavigate();
+  const { members, submissions, currentUserId } = useStore();
+  const me = members.find((m) => m.id === currentUserId);
+  const totalXp = me ? getUserTotalXp(submissions, me.id) : 0;
+  const lvl = getLevelInfo(totalXp);
+  const pct = lvl.isMax ? 100 : Math.round((lvl.currentLevelXp / lvl.nextLevelXp) * 100);
+
   return (
     <aside className="w-60 shrink-0 bg-sidebar text-sidebar-foreground flex flex-col h-screen sticky top-0">
       {/* Logo */}
@@ -48,8 +57,29 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-sidebar-border">
+      {/* User + Level + Logout */}
+      <div className="p-3 border-t border-sidebar-border space-y-3">
+        {me && (
+          <div className="px-2 pt-1">
+            <div className="text-sm font-semibold truncate">{me.name}</div>
+            <div className="flex items-center gap-1.5 text-xs text-sidebar-foreground/70 mt-0.5">
+              <Star className="h-3 w-3 text-primary" />
+              <span>Level: {lvl.level}</span>
+            </div>
+            <div className="mt-2">
+              <Progress value={pct} className="h-1.5 bg-sidebar-accent" />
+              <div className="flex items-center justify-between mt-1.5 text-[10px] text-sidebar-foreground/60">
+                <span className="flex items-center gap-1">
+                  <Zap className="h-3 w-3 text-xp" />
+                  <span className="font-semibold text-xp">{lvl.totalXp} XP</span>
+                </span>
+                <span>
+                  {lvl.isMax ? "Max" : `${lvl.xpToNext} to L${lvl.level + 1}`}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         <button
           onClick={() => navigate("/")}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold bg-destructive/15 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
