@@ -31,6 +31,7 @@ export default function StaffTaskLog() {
   const [tab, setTab] = useState<Tab>("all");
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
   const [qty, setQty] = useState(1);
+  const [successFor, setSuccessFor] = useState<{ task: Task; approvedCount: number } | null>(null);
 
   const mine = useMemo(() => submissions.filter((s) => s.submittedById === currentUserId), [submissions, currentUserId]);
   const totalXp = mine.filter((s) => s.status === "Approved").reduce((sum, s) => sum + s.xpEarned, 0);
