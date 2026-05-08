@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
 import { useCelebration } from "@/contexts/CelebrationContext";
+import { SubmissionSuccessModal } from "@/components/SubmissionSuccessModal";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Award, CheckCircle2, FileStack, Sparkles, Zap } from "lucide-react";
