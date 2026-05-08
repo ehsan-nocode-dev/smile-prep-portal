@@ -8,7 +8,8 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
-import { useCelebration } from "@/lib/celebration";
+import { useCelebration } from "@/contexts/CelebrationContext";
+import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
 import { Check, Pencil, X } from "lucide-react";
 
 export default function AdminSubmissions() {
@@ -21,24 +22,35 @@ export default function AdminSubmissions() {
     const sub = submissions.find((s) => s.id === submissionId);
     if (!sub) return;
 
-    // Compute approved totals before vs after to detect newly crossed badge tiers
     const task = tasks.find((t) => t.id === sub.taskId);
     const before = submissions
       .filter((s) => s.submittedById === sub.submittedById && s.taskId === sub.taskId && s.status === "Approved")
       .reduce((n, s) => n + s.quantity, 0);
     const after = before + sub.quantity;
 
+    // Level-up detection: compare totals before/after this approval
+    const totalBefore = getUserTotalXp(submissions, sub.submittedById);
+    const totalAfter = totalBefore + sub.xpEarned;
+    const lvlBefore = getLevelInfo(totalBefore).level;
+    const lvlAfter = getLevelInfo(totalAfter).level;
+
     updateSubmissionStatus(submissionId, "Approved", reviewer);
-    celebrate({ type: "approved", taskName: sub.taskName, xp: sub.xpEarned });
+
+    // Sequence the celebrations
+    celebrate("task_approved", { taskName: sub.taskName });
+    setTimeout(() => celebrate("xp_gained", { amount: sub.xpEarned }), 200);
 
     if (task) {
       const newlyEarned = task.badges.filter((b) => before < b.tracks && after >= b.tracks);
       newlyEarned.forEach((b, i) => {
-        // Stagger slightly so multiple unlocks don't render on top of each other
         setTimeout(() => {
-          celebrate({ type: "badge", tier: b.tier, taskName: task.name, bonusXp: b.bonusXp });
-        }, 350 + i * 600);
+          celebrate("badge_unlocked", { badgeName: `${b.tier} — ${task.name}`, tier: b.tier });
+        }, 900 + i * 1200);
       });
+    }
+
+    if (lvlAfter > lvlBefore) {
+      setTimeout(() => celebrate("level_up", { level: lvlAfter }), 1200);
     }
   };
 
@@ -46,7 +58,8 @@ export default function AdminSubmissions() {
     const sub = submissions.find((s) => s.id === submissionId);
     if (!sub) return;
     updateSubmissionStatus(submissionId, "Rejected", reviewer);
-    celebrate({ type: "rejected", taskName: sub.taskName });
+    // Rejection: keep it lightweight via toast
+    celebrate("task_submitted", { taskName: sub.taskName });
   };
 
   return (

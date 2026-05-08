@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store";
-import { CelebrationProvider } from "@/lib/celebration";
+import { CelebrationProvider } from "@/contexts/CelebrationContext";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
