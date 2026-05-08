@@ -9,7 +9,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
-import { useCelebration } from "@/lib/celebration";
+import { useCelebration } from "@/contexts/CelebrationContext";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Award, CheckCircle2, FileStack, Sparkles, Zap } from "lucide-react";
@@ -56,7 +56,7 @@ export default function StaffTaskLog() {
       submittedByName: me.name,
       xpEarned: xp,
     });
-    celebrate({ type: "submitted", taskName: submitFor.name, xp });
+    celebrate("task_submitted", { taskName: submitFor.name });
     setSubmitFor(null);
     setQty(1);
   };
