@@ -215,6 +215,13 @@ export default function StaffTaskLog() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SubmissionSuccessModal
+        open={!!successFor}
+        task={successFor?.task ?? null}
+        approvedCount={successFor?.approvedCount ?? 0}
+        onClose={() => setSuccessFor(null)}
+      />
     </div>
   );
 }
