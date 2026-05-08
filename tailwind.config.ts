@@ -117,6 +117,14 @@ export default {
           "0%, 100%": { opacity: "0.12" },
           "50%": { opacity: "0.28" },
         },
+        "check-pop": {
+          "0%": { opacity: "0", transform: "scale(0.3)" },
+          "60%": { opacity: "1", transform: "scale(1.15)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "check-draw": {
+          to: { strokeDashoffset: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
