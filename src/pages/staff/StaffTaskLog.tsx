@@ -50,6 +50,7 @@ export default function StaffTaskLog() {
   const handleSubmit = () => {
     if (!submitFor) return;
     const xp = submitFor.baseXp * qty;
+    const approvedCount = completionsByTask(submitFor.id);
     addSubmission({
       taskId: submitFor.id,
       taskName: submitFor.name,
@@ -58,7 +59,7 @@ export default function StaffTaskLog() {
       submittedByName: me.name,
       xpEarned: xp,
     });
-    celebrate("task_submitted", { taskName: submitFor.name });
+    setSuccessFor({ task: submitFor, approvedCount });
     setSubmitFor(null);
     setQty(1);
   };
