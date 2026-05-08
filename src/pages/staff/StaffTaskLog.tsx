@@ -9,7 +9,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
-import { useCelebration } from "@/contexts/CelebrationContext";
+import { SubmissionSuccessModal } from "@/components/SubmissionSuccessModal";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Award, CheckCircle2, FileStack, Sparkles, Zap } from "lucide-react";
@@ -25,11 +25,11 @@ function nextBadge(badges: BadgeTier[], completed: number): { next: BadgeTier | 
 
 export default function StaffTaskLog() {
   const { tasks, submissions, addSubmission, currentUserId, members } = useStore();
-  const { celebrate } = useCelebration();
   const me = members.find((m) => m.id === currentUserId)!;
   const [tab, setTab] = useState<Tab>("all");
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
   const [qty, setQty] = useState(1);
+  const [successFor, setSuccessFor] = useState<{ task: Task; approvedCount: number } | null>(null);
 
   const mine = useMemo(() => submissions.filter((s) => s.submittedById === currentUserId), [submissions, currentUserId]);
   const totalXp = mine.filter((s) => s.status === "Approved").reduce((sum, s) => sum + s.xpEarned, 0);
@@ -48,6 +48,7 @@ export default function StaffTaskLog() {
   const handleSubmit = () => {
     if (!submitFor) return;
     const xp = submitFor.baseXp * qty;
+    const approvedCount = completionsByTask(submitFor.id);
     addSubmission({
       taskId: submitFor.id,
       taskName: submitFor.name,
@@ -56,7 +57,7 @@ export default function StaffTaskLog() {
       submittedByName: me.name,
       xpEarned: xp,
     });
-    celebrate("task_submitted", { taskName: submitFor.name });
+    setSuccessFor({ task: submitFor, approvedCount });
     setSubmitFor(null);
     setQty(1);
   };
@@ -214,6 +215,13 @@ export default function StaffTaskLog() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SubmissionSuccessModal
+        open={!!successFor}
+        task={successFor?.task ?? null}
+        approvedCount={successFor?.approvedCount ?? 0}
+        onClose={() => setSuccessFor(null)}
+      />
     </div>
   );
 }
