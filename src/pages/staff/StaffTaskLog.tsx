@@ -25,7 +25,6 @@ function nextBadge(badges: BadgeTier[], completed: number): { next: BadgeTier | 
 
 export default function StaffTaskLog() {
   const { tasks, submissions, addSubmission, currentUserId, members } = useStore();
-  const { celebrate } = useCelebration();
   const me = members.find((m) => m.id === currentUserId)!;
   const [tab, setTab] = useState<Tab>("all");
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
