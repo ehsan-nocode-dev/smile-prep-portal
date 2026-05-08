@@ -137,6 +137,8 @@ export default {
         "confetti-fall": "confetti-fall 1.2s ease-out forwards",
         "xp-float": "xp-float 1.5s ease-out forwards",
         "bg-pulse": "bg-pulse 2.5s ease-in-out infinite",
+        "check-pop": "check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "check-draw": "check-draw 0.4s ease-out 0.3s forwards",
       },
     },
   },
