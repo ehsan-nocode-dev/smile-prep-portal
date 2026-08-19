@@ -37,6 +37,7 @@ interface CrownsContextValue {
   updateProduct: (id: string, p: Partial<StoreProduct>) => void;
   deleteProduct: (id: string) => void;
   markNotificationsRead: () => void;
+  devTopUp: (userId: string, userName: string, amount?: number) => void;
 }
 
 const CrownsContext = createContext<CrownsContextValue | null>(null);
