@@ -1,11 +1,13 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ToothIcon } from "./ToothIcon";
-import { LogOut, Star, Zap } from "lucide-react";
+import { Crown, LogOut, Star, Zap } from "lucide-react";
 import { ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
 import { Progress } from "@/components/ui/progress";
+import { useCrowns } from "@/contexts/CrownsContext";
+import { formatCrowns } from "@/lib/crowns";
 
 export interface NavItem {
   to: string;
@@ -16,7 +18,11 @@ export interface NavItem {
 
 export function PortalSidebar({ items }: { items: NavItem[] }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { members, submissions, currentUserId } = useStore();
+  const { getBalance } = useCrowns();
+  const isAdmin = pathname.startsWith("/admin");
+  const balance = getBalance(currentUserId);
   const me = members.find((m) => m.id === currentUserId);
   const totalXp = me ? getUserTotalXp(submissions, me.id) : 0;
   const lvl = getLevelInfo(totalXp);
@@ -77,6 +83,14 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
                   {lvl.isMax ? "Max" : `${lvl.xpToNext} to L${lvl.level + 1}`}
                 </span>
               </div>
+              <button
+                onClick={() => navigate(isAdmin ? "/admin/crowns" : "/staff/profile")}
+                className="mt-1.5 w-full flex items-center gap-1 text-[10px] text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+              >
+                <Crown className="h-3 w-3 text-crown" />
+                <span className="font-semibold text-crown tabular-nums">{formatCrowns(balance)}</span>
+                <span>Crowns</span>
+              </button>
             </div>
           </div>
         )}

@@ -21,6 +21,7 @@ export interface CrownTransaction {
   balanceAfter: number;
   referenceId: string;
   referenceLabel: string;
+  redemptionReference?: string;
   createdAt: string;
 }
 
@@ -75,7 +76,23 @@ export const SOURCE_LABELS: Record<CrownTransactionSource, string> = {
 
 /* ---------------- Formatting helpers ---------------- */
 
-export const formatCrowns = (n: number) => n.toLocaleString("en-US");
+export const formatCrowns = (n: number) => n.toLocaleString("en-GB");
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/** Day-first UK format: 14 Aug 2026 · 09:32 */
+export function formatTxDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const REF_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+export function generateRedemptionReference(): string {
+  let out = "";
+  for (let i = 0; i < 4; i++) out += REF_CHARS[Math.floor(Math.random() * REF_CHARS.length)];
+  return `#MU-${out}`;
+}
 
 export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -207,6 +224,7 @@ export function buildSeedTransactions(): { transactions: CrownTransaction[]; acc
       rows.push({
         id: `ct${i}`, userId: user.id, userName: user.name, type: "spent", source: "store_purchase",
         amount: product.crownCost, referenceId: product.id, referenceLabel: product.title, createdAt,
+        redemptionReference: `#MU-${Math.floor(rand() * 9000 + 1000)}`,
       });
     } else {
       const label = EARN_LABELS[Math.floor(rand() * EARN_LABELS.length)];

@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 import { Department, Member, Role, Status } from "@/lib/mock-data";
-import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Crown, Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { useCrowns } from "@/contexts/CrownsContext";
+import { formatCrowns } from "@/lib/crowns";
 
 const departments: Department[] = ["Assistant", "Hygienist", "Business Associate", "Manager"];
 
@@ -89,6 +91,7 @@ function MemberForm({
 
 export default function AdminTeam() {
   const { members, addMember, updateMember, deleteMember } = useStore();
+  const { getBalance } = useCrowns();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
   const [viewing, setViewing] = useState<Member | null>(null);
@@ -107,13 +110,14 @@ export default function AdminTeam() {
 
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Profile</th>
-              <th className="text-left px-4 py-3 font-bold">Department</th>
-              <th className="text-left px-4 py-3 font-bold">Role</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Profile</th>
+              <th className="text-left px-4 py-3 font-semibold">Department</th>
+              <th className="text-left px-4 py-3 font-semibold">Role</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Crowns</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -133,6 +137,12 @@ export default function AdminTeam() {
                 <td className="px-4 py-3">{m.department}</td>
                 <td className="px-4 py-3">{m.role}</td>
                 <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
+                <td className="px-4 py-3 text-right">
+                  <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums">
+                    <Crown className="h-3.5 w-3.5 text-crown" />
+                    {formatCrowns(getBalance(m.id))}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
                     <button

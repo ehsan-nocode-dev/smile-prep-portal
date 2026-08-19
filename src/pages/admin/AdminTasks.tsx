@@ -87,7 +87,7 @@ function TaskForm({
         <Label className="mb-2 block">Badges</Label>
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-primary text-primary-foreground">
+            <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="text-left px-3 py-2 font-semibold">Tier</th>
                 <th className="text-left px-3 py-2 font-semibold">Badge</th>
@@ -173,15 +173,15 @@ export default function AdminTasks() {
 
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Task</th>
-              <th className="text-left px-4 py-3 font-bold">Department</th>
-              <th className="text-left px-4 py-3 font-bold">Badges</th>
-              <th className="text-left px-4 py-3 font-bold">XP</th>
-              <th className="text-left px-4 py-3 font-bold">Crowns</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Task</th>
+              <th className="text-left px-4 py-3 font-semibold">Department</th>
+              <th className="text-left px-4 py-3 font-semibold">Badges</th>
+              <th className="text-left px-4 py-3 font-semibold">XP</th>
+              <th className="text-left px-4 py-3 font-semibold">Crowns</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>

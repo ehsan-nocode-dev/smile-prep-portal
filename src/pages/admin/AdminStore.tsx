@@ -36,6 +36,7 @@ export default function AdminStore() {
   const { products, addProduct, updateProduct, deleteProduct } = useCrowns();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | ProductType>("all");
   const [editing, setEditing] = useState<StoreProduct | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -45,8 +46,9 @@ export default function AdminStore() {
     const q = query.trim().toLowerCase();
     return products
       .filter((p) => (statusFilter === "all" ? true : p.status === statusFilter))
-      .filter((p) => (q ? p.title.toLowerCase().includes(q) : true));
-  }, [products, query, statusFilter]);
+      .filter((p) => (typeFilter === "all" ? true : p.productType === typeFilter))
+      .filter((p) => (q ? p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) : true));
+  }, [products, query, statusFilter, typeFilter]);
 
   const openCreate = () => { setDraft(emptyDraft); setCreating(true); };
   const openEdit = (p: StoreProduct) => {
@@ -111,18 +113,32 @@ export default function AdminStore() {
             </button>
           ))}
         </div>
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
+          {(["all", "digital", "physical"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-colors",
+                typeFilter === t ? "bg-card card-shadow" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-card rounded-xl card-shadow overflow-x-auto">
         <table className="w-full text-sm min-w-[820px]">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Product</th>
-              <th className="text-left px-4 py-3 font-bold">Type</th>
-              <th className="text-left px-4 py-3 font-bold">Cost</th>
-              <th className="text-left px-4 py-3 font-bold">Stock</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Product</th>
+              <th className="text-left px-4 py-3 font-semibold">Type</th>
+              <th className="text-left px-4 py-3 font-semibold">Cost</th>
+              <th className="text-left px-4 py-3 font-semibold">Stock</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -240,7 +256,7 @@ export default function AdminStore() {
           <DialogHeader>
             <DialogTitle>Delete {deleting?.title}?</DialogTitle>
             <DialogDescription>
-              Past redemptions stay in the Crown ledger. This only removes the product from the store.
+              Past redemptions stay in Crown History. This only removes the product from the store.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
