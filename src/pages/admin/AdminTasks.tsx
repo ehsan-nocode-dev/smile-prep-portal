@@ -179,6 +179,7 @@ export default function AdminTasks() {
               <th className="text-left px-4 py-3 font-bold">Department</th>
               <th className="text-left px-4 py-3 font-bold">Badges</th>
               <th className="text-left px-4 py-3 font-bold">XP</th>
+              <th className="text-left px-4 py-3 font-bold">Crowns</th>
               <th className="text-left px-4 py-3 font-bold">Status</th>
               <th className="text-right px-4 py-3 font-bold">Action</th>
             </tr>
