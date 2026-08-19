@@ -28,6 +28,7 @@ export interface Task {
   description: string;
   department: Department;
   baseXp: number;
+  crownValue: number;
   status: Status;
   badges: BadgeTier[];
 }
@@ -75,6 +76,7 @@ export const initialTasks: Task[] = [
     description: "Prepare a tooth for crown placement.",
     department: "Assistant",
     baseXp: 25,
+    crownValue: 12,
     status: "Active",
     badges: defaultBadges(),
   },
@@ -84,6 +86,7 @@ export const initialTasks: Task[] = [
     description: "Deliver and seat a finished crown.",
     department: "Assistant",
     baseXp: 20,
+    crownValue: 10,
     status: "Active",
     badges: defaultBadges(),
   },
@@ -93,6 +96,7 @@ export const initialTasks: Task[] = [
     description: "Clean operatory windows thoroughly.",
     department: "Assistant",
     baseXp: 50,
+    crownValue: 25,
     status: "Active",
     badges: defaultBadges(),
   },
