@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
 import { Department, Member, Role, Status } from "@/lib/mock-data";
-import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Crown, Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { useCrowns } from "@/contexts/CrownsContext";
+import { formatCrowns } from "@/lib/crowns";
 
 const departments: Department[] = ["Assistant", "Hygienist", "Business Associate", "Manager"];
 
