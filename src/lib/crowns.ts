@@ -220,20 +220,21 @@ export function buildSeedTransactions(): { transactions: CrownTransaction[]; acc
 
   rows.sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
 
-  const transactions: CrownTransaction[] = rows.map((r) => {
+  const transactions: CrownTransaction[] = [];
+  for (const r of rows) {
     const acc = accounts[r.userId];
     if (r.type === "earned") {
       acc.crownBalance += r.amount;
       acc.totalCrownsEarned += r.amount;
+    } else if (acc.crownBalance >= r.amount + 400) {
+      // only spend when the user comfortably affords it, so balances stay realistic
+      acc.crownBalance -= r.amount;
+      acc.totalCrownsSpent += r.amount;
     } else {
-      // keep balances realistic: only spend what is available
-      const amount = Math.min(r.amount, acc.crownBalance);
-      r.amount = amount;
-      acc.crownBalance -= amount;
-      acc.totalCrownsSpent += amount;
+      continue;
     }
-    return { ...r, balanceAfter: acc.crownBalance };
-  }).filter((t) => t.amount > 0);
+    transactions.push({ ...r, balanceAfter: acc.crownBalance });
+  }
 
   return { transactions, accounts };
 }
