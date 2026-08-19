@@ -11,6 +11,8 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CrownHistory } from "@/components/crowns/CrownHistory";
 
 interface ProfileViewProps {
   extraSection?: ReactNode;
