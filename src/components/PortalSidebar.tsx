@@ -21,7 +21,7 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { members, submissions, currentUserId } = useStore();
-  const { getBalance, pendingFulfilments } = useCrowns();
+  const { getBalance, pendingFulfilments, devTopUp } = useCrowns();
   const isAdmin = pathname.startsWith("/admin");
   const balance = getBalance(currentUserId);
   const me = members.find((m) => m.id === currentUserId);
