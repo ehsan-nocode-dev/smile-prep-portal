@@ -73,6 +73,12 @@ export function CrownHistory({ userId }: { userId: string }) {
                       {t.redemptionReference && (
                         <> · <span className="font-mono">{t.redemptionReference}</span></>
                       )}
+                      {t.type === "spent" && t.fulfilmentStatus === "pending" && (
+                        <> · <span className="text-warning font-medium">Awaiting fulfilment</span></>
+                      )}
+                      {t.type === "spent" && t.fulfilmentStatus === "fulfilled" && (
+                        <> · <span className="text-success font-medium">Fulfilled</span></>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 h-16 align-middle text-muted-foreground whitespace-nowrap">
