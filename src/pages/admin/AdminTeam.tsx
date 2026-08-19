@@ -91,6 +91,7 @@ function MemberForm({
 
 export default function AdminTeam() {
   const { members, addMember, updateMember, deleteMember } = useStore();
+  const { getBalance } = useCrowns();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Member | null>(null);
   const [viewing, setViewing] = useState<Member | null>(null);
