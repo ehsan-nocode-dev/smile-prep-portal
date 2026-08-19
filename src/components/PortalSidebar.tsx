@@ -14,13 +14,14 @@ export interface NavItem {
   label: string;
   icon: ReactNode;
   end?: boolean;
+  badgeKey?: "fulfil";
 }
 
 export function PortalSidebar({ items }: { items: NavItem[] }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { members, submissions, currentUserId } = useStore();
-  const { getBalance } = useCrowns();
+  const { getBalance, pendingFulfilments } = useCrowns();
   const isAdmin = pathname.startsWith("/admin");
   const balance = getBalance(currentUserId);
   const me = members.find((m) => m.id === currentUserId);
@@ -58,7 +59,12 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
             }
           >
             <span className="shrink-0">{item.icon}</span>
-            <span>{item.label}</span>
+            <span className="flex-1">{item.label}</span>
+            {item.badgeKey === "fulfil" && pendingFulfilments.length > 0 && (
+              <span className="min-w-5 h-5 px-1.5 rounded-full bg-warning text-warning-foreground text-[10px] font-bold flex items-center justify-center">
+                {pendingFulfilments.length}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
