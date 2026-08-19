@@ -113,6 +113,7 @@ export default function AdminTeam() {
               <th className="text-left px-4 py-3 font-semibold">Department</th>
               <th className="text-left px-4 py-3 font-semibold">Role</th>
               <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Crowns</th>
               <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
@@ -133,6 +134,12 @@ export default function AdminTeam() {
                 <td className="px-4 py-3">{m.department}</td>
                 <td className="px-4 py-3">{m.role}</td>
                 <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
+                <td className="px-4 py-3 text-right">
+                  <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums">
+                    <Crown className="h-3.5 w-3.5 text-crown" />
+                    {formatCrowns(getBalance(m.id))}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
                     <button

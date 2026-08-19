@@ -9,7 +9,7 @@ const items: NavItem[] = [
   { to: "/admin/submissions", label: "Submissions", icon: <FileCheck2 className="h-4 w-4" /> },
   { to: "/admin/team", label: "My Team", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/store", label: "Store", icon: <Store className="h-4 w-4" /> },
-  { to: "/admin/crowns", label: "Crown Ledger", icon: <Coins className="h-4 w-4" /> },
+  { to: "/admin/crowns", label: "Crown History", icon: <Coins className="h-4 w-4" /> },
   { to: "/admin/leaderboard", label: "Leaderboard", icon: <Trophy className="h-4 w-4" /> },
   { to: "/admin/profile", label: "Profile", icon: <UserCircle2 className="h-4 w-4" /> },
 ];

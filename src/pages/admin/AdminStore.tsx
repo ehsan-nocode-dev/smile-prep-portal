@@ -36,6 +36,7 @@ export default function AdminStore() {
   const { products, addProduct, updateProduct, deleteProduct } = useCrowns();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | ProductType>("all");
   const [editing, setEditing] = useState<StoreProduct | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
@@ -45,8 +46,9 @@ export default function AdminStore() {
     const q = query.trim().toLowerCase();
     return products
       .filter((p) => (statusFilter === "all" ? true : p.status === statusFilter))
-      .filter((p) => (q ? p.title.toLowerCase().includes(q) : true));
-  }, [products, query, statusFilter]);
+      .filter((p) => (typeFilter === "all" ? true : p.productType === typeFilter))
+      .filter((p) => (q ? p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) : true));
+  }, [products, query, statusFilter, typeFilter]);
 
   const openCreate = () => { setDraft(emptyDraft); setCreating(true); };
   const openEdit = (p: StoreProduct) => {
@@ -108,6 +110,20 @@ export default function AdminStore() {
               )}
             >
               {s}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
+          {(["all", "digital", "physical"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-colors",
+                typeFilter === t ? "bg-card card-shadow" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t}
             </button>
           ))}
         </div>
@@ -240,7 +256,7 @@ export default function AdminStore() {
           <DialogHeader>
             <DialogTitle>Delete {deleting?.title}?</DialogTitle>
             <DialogDescription>
-              Past redemptions stay in the Crown ledger. This only removes the product from the store.
+              Past redemptions stay in Crown History. This only removes the product from the store.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
