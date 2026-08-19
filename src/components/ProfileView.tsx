@@ -116,7 +116,16 @@ export function ProfileView({ extraSection, userId, showBack }: ProfileViewProps
         </div>
       </div>
 
-      {extraSection}
+      <Tabs defaultValue="overview" className="mb-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="crowns">Crowns</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="mt-4">{extraSection}</TabsContent>
+        <TabsContent value="crowns" className="mt-4">
+          <CrownHistory userId={targetId} />
+        </TabsContent>
+      </Tabs>
 
       {isSelf && (
         <Dialog open={open} onOpenChange={setOpen}>
