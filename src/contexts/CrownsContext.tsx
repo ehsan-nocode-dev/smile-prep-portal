@@ -8,6 +8,7 @@ import {
   buildSeedTransactions,
   initialNotifications,
   initialProducts,
+  generateRedemptionReference,
 } from "@/lib/crowns";
 
 const seed = buildSeedTransactions();
@@ -106,11 +107,13 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
       if (acc.crownBalance < product.crownCost) return { ok: false, error: "insufficient" };
 
       const balanceAfter = acc.crownBalance - product.crownCost;
+      const redemptionReference = generateRedemptionReference();
       const tx: CrownTransaction = {
         id: `ct-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         userId, userName, type: "spent", source: "store_purchase",
         amount: product.crownCost, balanceAfter,
-        referenceId: product.id, referenceLabel: product.title, createdAt: now(),
+        referenceId: product.id, referenceLabel: product.title,
+        redemptionReference, createdAt: now(),
       };
 
       setAccounts((prev) => ({

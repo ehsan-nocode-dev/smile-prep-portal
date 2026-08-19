@@ -89,15 +89,15 @@ export default function AdminSubmissions() {
 
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Task</th>
-              <th className="text-left px-4 py-3 font-bold">Quantity</th>
-              <th className="text-left px-4 py-3 font-bold">Crowns</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-left px-4 py-3 font-bold">Submitted By</th>
-              <th className="text-left px-4 py-3 font-bold">Submission Date</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Task</th>
+              <th className="text-left px-4 py-3 font-semibold">Quantity</th>
+              <th className="text-left px-4 py-3 font-semibold">Crowns</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-left px-4 py-3 font-semibold">Submitted By</th>
+              <th className="text-left px-4 py-3 font-semibold">Submission Date</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>

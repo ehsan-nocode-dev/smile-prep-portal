@@ -115,14 +115,14 @@ export default function AdminStore() {
 
       <div className="bg-card rounded-xl card-shadow overflow-x-auto">
         <table className="w-full text-sm min-w-[820px]">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Product</th>
-              <th className="text-left px-4 py-3 font-bold">Type</th>
-              <th className="text-left px-4 py-3 font-bold">Cost</th>
-              <th className="text-left px-4 py-3 font-bold">Stock</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Product</th>
+              <th className="text-left px-4 py-3 font-semibold">Type</th>
+              <th className="text-left px-4 py-3 font-semibold">Cost</th>
+              <th className="text-left px-4 py-3 font-semibold">Stock</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>

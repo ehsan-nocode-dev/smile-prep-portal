@@ -107,13 +107,13 @@ export default function AdminTeam() {
 
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-primary text-primary-foreground">
+          <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="text-left px-4 py-3 font-bold">Profile</th>
-              <th className="text-left px-4 py-3 font-bold">Department</th>
-              <th className="text-left px-4 py-3 font-bold">Role</th>
-              <th className="text-left px-4 py-3 font-bold">Status</th>
-              <th className="text-right px-4 py-3 font-bold">Action</th>
+              <th className="text-left px-4 py-3 font-semibold">Profile</th>
+              <th className="text-left px-4 py-3 font-semibold">Department</th>
+              <th className="text-left px-4 py-3 font-semibold">Role</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
           </thead>
           <tbody>
