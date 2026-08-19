@@ -9,12 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
 import { useCelebration } from "@/contexts/CelebrationContext";
+import { useCrowns } from "@/contexts/CrownsContext";
+import { formatCrowns } from "@/lib/crowns";
+import { toast } from "sonner";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
 import { Check, Pencil, X } from "lucide-react";
 
 export default function AdminSubmissions() {
   const { submissions, tasks, updateSubmissionStatus, updateSubmissionQuantity, members, currentUserId } = useStore();
   const { celebrate } = useCelebration();
+  const { awardCrowns } = useCrowns();
   const reviewer = members.find((m) => m.id === currentUserId)?.name || "Admin";
   const [editing, setEditing] = useState<{ id: string; quantity: number } | null>(null);
 
@@ -35,6 +39,23 @@ export default function AdminSubmissions() {
     const lvlAfter = getLevelInfo(totalAfter).level;
 
     updateSubmissionStatus(submissionId, "Approved", reviewer);
+
+    // Crowns: awarded once, only on approval
+    if (sub.status !== "Approved" && task) {
+      const crowns = (task.crownValue ?? 0) * sub.quantity;
+      if (crowns > 0) {
+        awardCrowns({
+          userId: sub.submittedById,
+          userName: sub.submittedByName,
+          amount: crowns,
+          referenceId: sub.id,
+          referenceLabel: `${sub.taskName} x${sub.quantity}`,
+        });
+        toast.success(`${sub.submittedByName} earned ${formatCrowns(crowns)} Crowns`, {
+          description: `${sub.taskName} x${sub.quantity} approved.`,
+        });
+      }
+    }
 
     // Sequence the celebrations
     celebrate("task_approved", { taskName: sub.taskName });
@@ -72,6 +93,7 @@ export default function AdminSubmissions() {
             <tr>
               <th className="text-left px-4 py-3 font-bold">Task</th>
               <th className="text-left px-4 py-3 font-bold">Quantity</th>
+              <th className="text-left px-4 py-3 font-bold">Crowns</th>
               <th className="text-left px-4 py-3 font-bold">Status</th>
               <th className="text-left px-4 py-3 font-bold">Submitted By</th>
               <th className="text-left px-4 py-3 font-bold">Submission Date</th>
@@ -83,6 +105,9 @@ export default function AdminSubmissions() {
               <tr key={s.id} className="border-t hover:bg-muted/30">
                 <td className="px-4 py-3 font-semibold">{s.taskName}</td>
                 <td className="px-4 py-3">x{s.quantity}</td>
+                <td className="px-4 py-3 font-bold text-crown">
+                  {(tasks.find((t) => t.id === s.taskId)?.crownValue ?? 0) * s.quantity}
+                </td>
                 <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                 <td className="px-4 py-3">{s.submittedByName}</td>
                 <td className="px-4 py-3 text-muted-foreground">{s.date}</td>

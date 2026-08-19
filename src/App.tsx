@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store";
 import { CelebrationProvider } from "@/contexts/CelebrationContext";
+import { CrownsProvider } from "@/contexts/CrownsContext";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -16,12 +17,15 @@ import AdminSubmissions from "./pages/admin/AdminSubmissions";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminLeaderboard from "./pages/admin/AdminLeaderboard";
 import AdminProfile from "./pages/admin/AdminProfile";
+import AdminStore from "./pages/admin/AdminStore";
+import AdminCrowns from "./pages/admin/AdminCrowns";
 
 import StaffLayout from "./pages/staff/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffTaskLog from "./pages/staff/StaffTaskLog";
 import StaffLeaderboard from "./pages/staff/StaffLeaderboard";
 import StaffProfile from "./pages/staff/StaffProfile";
+import StaffStore from "./pages/staff/StaffStore";
 
 import MemberProfile from "./pages/MemberProfile";
 
@@ -30,6 +34,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <StoreProvider>
+      <CrownsProvider>
       <CelebrationProvider>
         <TooltipProvider>
           <Toaster />
@@ -43,6 +48,8 @@ const App = () => (
               <Route path="tasks" element={<AdminTasks />} />
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="team" element={<AdminTeam />} />
+              <Route path="store" element={<AdminStore />} />
+              <Route path="crowns" element={<AdminCrowns />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="members/:memberId" element={<MemberProfile />} />
@@ -51,6 +58,7 @@ const App = () => (
             <Route path="/staff" element={<StaffLayout />}>
               <Route index element={<StaffDashboard />} />
               <Route path="tasks" element={<StaffTaskLog />} />
+              <Route path="store" element={<StaffStore />} />
               <Route path="leaderboard" element={<StaffLeaderboard />} />
               <Route path="profile" element={<StaffProfile />} />
               <Route path="members/:memberId" element={<MemberProfile />} />
@@ -62,6 +70,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </CelebrationProvider>
+      </CrownsProvider>
     </StoreProvider>
   </QueryClientProvider>
 );

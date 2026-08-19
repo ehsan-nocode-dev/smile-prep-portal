@@ -11,6 +11,8 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CrownHistory } from "@/components/crowns/CrownHistory";
 
 interface ProfileViewProps {
   extraSection?: ReactNode;
@@ -116,7 +118,16 @@ export function ProfileView({ extraSection, userId, showBack }: ProfileViewProps
         </div>
       </div>
 
-      {extraSection}
+      <Tabs defaultValue="overview" className="mb-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="crowns">Crowns</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="mt-4">{extraSection}</TabsContent>
+        <TabsContent value="crowns" className="mt-4">
+          <CrownHistory userId={targetId} />
+        </TabsContent>
+      </Tabs>
 
       {isSelf && (
         <Dialog open={open} onOpenChange={setOpen}>
