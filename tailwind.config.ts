@@ -42,6 +42,7 @@ export default {
           foreground: "hsl(var(--warning-foreground))",
         },
         xp: "hsl(var(--xp))",
+        crown: "hsl(var(--crown))",
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
