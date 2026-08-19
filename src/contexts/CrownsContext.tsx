@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import {
   AdminNotification,
   CrownAccount,
@@ -11,7 +11,7 @@ import {
   generateRedemptionReference,
 } from "@/lib/crowns";
 
-const seed = buildSeedTransactions();
+const STORAGE_KEY = "molarup.crowns.v3";
 
 export interface RedeemResult {
   ok: boolean;
@@ -24,6 +24,7 @@ interface CrownsContextValue {
   transactions: CrownTransaction[];
   notifications: AdminNotification[];
   unreadNotifications: number;
+  pendingFulfilments: CrownTransaction[];
   getAccount: (userId: string) => CrownAccount;
   getBalance: (userId: string) => number;
   getTransactions: (filters?: TransactionFilters) => CrownTransaction[];
@@ -31,6 +32,7 @@ interface CrownsContextValue {
     userId: string; userName: string; amount: number; referenceId: string; referenceLabel: string;
   }) => CrownTransaction | null;
   redeemProduct: (productId: string, userId: string, userName: string) => RedeemResult;
+  markFulfilled: (transactionId: string, fulfilledBy: string) => void;
   addProduct: (p: Omit<StoreProduct, "id" | "createdAt" | "updatedAt" | "autoDeactivated">) => void;
   updateProduct: (id: string, p: Partial<StoreProduct>) => void;
   deleteProduct: (id: string) => void;
@@ -42,11 +44,49 @@ const CrownsContext = createContext<CrownsContextValue | null>(null);
 const EMPTY_ACCOUNT: CrownAccount = { crownBalance: 0, totalCrownsEarned: 0, totalCrownsSpent: 0 };
 const now = () => new Date().toISOString();
 
+interface Persisted {
+  products: StoreProduct[];
+  transactions: CrownTransaction[];
+  accounts: Record<string, CrownAccount>;
+  notifications: AdminNotification[];
+}
+
+function loadState(): Persisted {
+  const seed = buildSeedTransactions();
+  const fallback: Persisted = {
+    products: initialProducts,
+    transactions: seed.transactions,
+    accounts: seed.accounts,
+    notifications: initialNotifications,
+  };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<Persisted>;
+    if (!parsed.products || !parsed.transactions || !parsed.accounts) return fallback;
+    return { ...fallback, ...parsed } as Persisted;
+  } catch {
+    return fallback;
+  }
+}
+
 export function CrownsProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<StoreProduct[]>(initialProducts);
-  const [transactions, setTransactions] = useState<CrownTransaction[]>(seed.transactions);
-  const [accounts, setAccounts] = useState<Record<string, CrownAccount>>(seed.accounts);
-  const [notifications, setNotifications] = useState<AdminNotification[]>(initialNotifications);
+  const [initial] = useState<Persisted>(loadState);
+  const [products, setProducts] = useState<StoreProduct[]>(initial.products);
+  const [transactions, setTransactions] = useState<CrownTransaction[]>(initial.transactions);
+  const [accounts, setAccounts] = useState<Record<string, CrownAccount>>(initial.accounts);
+  const [notifications, setNotifications] = useState<AdminNotification[]>(initial.notifications);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ products, transactions, accounts, notifications })
+      );
+    } catch {
+      /* storage unavailable — prototype continues in memory */
+    }
+  }, [products, transactions, accounts, notifications]);
 
   const getAccount = useCallback(
     (userId: string) => accounts[userId] ?? EMPTY_ACCOUNT,
@@ -61,6 +101,11 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
         .filter((t) => (f.userId ? t.userId === f.userId : true))
         .filter((t) => (f.productId ? t.referenceId === f.productId : true))
         .filter((t) => (f.type && f.type !== "all" ? t.type === f.type : true))
+        .filter((t) =>
+          f.status && f.status !== "all"
+            ? (t.fulfilmentStatus ?? (t.type === "spent" ? "not_required" : undefined)) === f.status
+            : true
+        )
         .filter((t) => (f.from ? new Date(t.createdAt) >= new Date(f.from) : true))
         .filter((t) => (f.to ? new Date(t.createdAt) <= new Date(`${f.to}T23:59:59`) : true))
         .filter((t) =>
@@ -70,6 +115,14 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
         )
         .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     },
+    [transactions]
+  );
+
+  const pendingFulfilments = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.type === "spent" && t.fulfilmentStatus === "pending")
+        .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt)),
     [transactions]
   );
 
@@ -113,7 +166,9 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
         userId, userName, type: "spent", source: "store_purchase",
         amount: product.crownCost, balanceAfter,
         referenceId: product.id, referenceLabel: product.title,
-        redemptionReference, createdAt: now(),
+        redemptionReference,
+        fulfilmentStatus: product.requiresFulfilment ? "pending" : "not_required",
+        createdAt: now(),
       };
 
       setAccounts((prev) => ({
@@ -141,25 +196,46 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
         )
       );
 
-      if (remaining === 0) {
-        setNotifications((prev) => [
-          {
-            id: `n-${Date.now()}`,
-            type: "product_out_of_stock",
-            productId: product.id,
-            productTitle: product.title,
-            message: `${product.title} is out of stock and has been deactivated.`,
-            read: false,
-            createdAt: now(),
-          },
-          ...prev,
-        ]);
+      const newNotifications: AdminNotification[] = [];
+      if (product.requiresFulfilment) {
+        newNotifications.push({
+          id: `n-${Date.now()}-f`,
+          type: "redemption_pending",
+          productId: product.id,
+          productTitle: product.title,
+          userName,
+          message: `${userName} redeemed ${product.title} — awaiting fulfilment.`,
+          read: false,
+          createdAt: now(),
+        });
       }
+      if (remaining === 0) {
+        newNotifications.push({
+          id: `n-${Date.now()}-s`,
+          type: "product_out_of_stock",
+          productId: product.id,
+          productTitle: product.title,
+          message: `${product.title} is out of stock and has been deactivated.`,
+          read: false,
+          createdAt: now(),
+        });
+      }
+      if (newNotifications.length) setNotifications((prev) => [...newNotifications, ...prev]);
 
       return { ok: true, transaction: tx };
     },
     [products, accounts]
   );
+
+  const markFulfilled: CrownsContextValue["markFulfilled"] = useCallback((transactionId, fulfilledBy) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === transactionId && t.fulfilmentStatus === "pending"
+          ? { ...t, fulfilmentStatus: "fulfilled", fulfilledAt: now(), fulfilledBy }
+          : t
+      )
+    );
+  }, []);
 
   const value = useMemo<CrownsContextValue>(
     () => ({
@@ -167,11 +243,13 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
       transactions,
       notifications,
       unreadNotifications: notifications.filter((n) => !n.read).length,
+      pendingFulfilments,
       getAccount,
       getBalance,
       getTransactions,
       awardCrowns,
       redeemProduct,
+      markFulfilled,
       addProduct: (p) =>
         setProducts((prev) => [
           { ...p, id: `p-${Date.now()}`, autoDeactivated: false, createdAt: now(), updatedAt: now() },
@@ -195,7 +273,7 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
       deleteProduct: (id) => setProducts((prev) => prev.filter((p) => p.id !== id)),
       markNotificationsRead: () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
     }),
-    [products, transactions, notifications, getAccount, getBalance, getTransactions, awardCrowns, redeemProduct]
+    [products, transactions, notifications, pendingFulfilments, getAccount, getBalance, getTransactions, awardCrowns, redeemProduct, markFulfilled]
   );
 
   return <CrownsContext.Provider value={value}>{children}</CrownsContext.Provider>;
