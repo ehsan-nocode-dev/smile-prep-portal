@@ -19,6 +19,7 @@ import AdminLeaderboard from "./pages/admin/AdminLeaderboard";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminStore from "./pages/admin/AdminStore";
 import AdminCrowns from "./pages/admin/AdminCrowns";
+import AdminFulfil from "./pages/admin/AdminFulfil";
 
 import StaffLayout from "./pages/staff/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="team" element={<AdminTeam />} />
               <Route path="store" element={<AdminStore />} />
+              <Route path="fulfil" element={<AdminFulfil />} />
               <Route path="crowns" element={<AdminCrowns />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
               <Route path="profile" element={<AdminProfile />} />

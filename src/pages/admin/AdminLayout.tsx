@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { PortalSidebar, NavItem } from "@/components/PortalSidebar";
 import { PortalTopBar } from "@/components/crowns/PortalTopBar";
-import { LayoutDashboard, ListChecks, FileCheck2, Users, Trophy, UserCircle2, Store, Coins } from "lucide-react";
+import { LayoutDashboard, ListChecks, FileCheck2, Users, Trophy, UserCircle2, Store, Coins, PackageCheck } from "lucide-react";
 
 const items: NavItem[] = [
   { to: "/admin", end: true, label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
@@ -9,6 +9,7 @@ const items: NavItem[] = [
   { to: "/admin/submissions", label: "Submissions", icon: <FileCheck2 className="h-4 w-4" /> },
   { to: "/admin/team", label: "My Team", icon: <Users className="h-4 w-4" /> },
   { to: "/admin/store", label: "Store", icon: <Store className="h-4 w-4" /> },
+  { to: "/admin/fulfil", label: "To Fulfil", icon: <PackageCheck className="h-4 w-4" />, badgeKey: "fulfil" },
   { to: "/admin/crowns", label: "Crown History", icon: <Coins className="h-4 w-4" /> },
   { to: "/admin/leaderboard", label: "Leaderboard", icon: <Trophy className="h-4 w-4" /> },
   { to: "/admin/profile", label: "Profile", icon: <UserCircle2 className="h-4 w-4" /> },

@@ -2,7 +2,7 @@ import { Bell, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { useCrowns } from "@/contexts/CrownsContext";
-import { formatCrowns, relativeTime } from "@/lib/crowns";
+import { formatCrowns, formatTxDate } from "@/lib/crowns";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -39,12 +39,12 @@ export function PortalTopBar({ portal }: { portal: "admin" | "staff" }) {
               {notifications.map((n) => (
                 <Link
                   key={n.id}
-                  to="/admin/store"
+                  to={n.type === "redemption_pending" ? "/admin/fulfil" : "/admin/store"}
                   className="block px-4 py-3 hover:bg-muted/50 transition-colors"
                 >
                   <div className="text-sm font-medium">{n.productTitle}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">{n.message}</div>
-                  <div className="text-[11px] text-muted-foreground mt-1">{relativeTime(n.createdAt)}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{formatTxDate(n.createdAt)}</div>
                 </Link>
               ))}
             </div>

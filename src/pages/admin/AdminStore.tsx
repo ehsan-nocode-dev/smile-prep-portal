@@ -24,12 +24,13 @@ interface Draft {
   crownCost: number;
   quantity: number;
   productType: ProductType;
+  requiresFulfilment: boolean;
   active: boolean;
 }
 
 const emptyDraft: Draft = {
   title: "", description: "", thumbnailUrl: "https://picsum.photos/seed/reward/640/360",
-  crownCost: 100, quantity: 1, productType: "digital", active: true,
+  crownCost: 100, quantity: 1, productType: "digital", requiresFulfilment: false, active: true,
 };
 
 export default function AdminStore() {
@@ -55,6 +56,7 @@ export default function AdminStore() {
     setDraft({
       title: p.title, description: p.description, thumbnailUrl: p.thumbnailUrl,
       crownCost: p.crownCost, quantity: p.quantity, productType: p.productType,
+      requiresFulfilment: p.requiresFulfilment,
       active: p.status === "active",
     });
     setEditing(p);
@@ -72,6 +74,7 @@ export default function AdminStore() {
       crownCost: draft.crownCost,
       quantity: draft.quantity,
       productType: draft.productType,
+      requiresFulfilment: draft.requiresFulfilment,
       status: (draft.active && draft.quantity > 0 ? "active" : "inactive") as StoreProduct["status"],
     };
 
@@ -228,13 +231,28 @@ export default function AdminStore() {
             </div>
             <div className="space-y-1.5">
               <Label>Product type</Label>
-              <Select value={draft.productType} onValueChange={(v) => setDraft({ ...draft, productType: v as ProductType })}>
+              <Select
+                value={draft.productType}
+                onValueChange={(v) =>
+                  setDraft({ ...draft, productType: v as ProductType, requiresFulfilment: v === "physical" })
+                }
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="digital">Digital</SelectItem>
                   <SelectItem value="physical">Physical</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <div className="font-medium text-sm">Requires fulfilment</div>
+                <div className="text-xs text-muted-foreground">Adds each redemption to the To Fulfil queue.</div>
+              </div>
+              <Switch
+                checked={draft.requiresFulfilment}
+                onCheckedChange={(v) => setDraft({ ...draft, requiresFulfilment: v })}
+              />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
