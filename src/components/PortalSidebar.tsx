@@ -21,7 +21,7 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { members, submissions, currentUserId } = useStore();
-  const { getBalance, pendingFulfilments } = useCrowns();
+  const { getBalance, pendingFulfilments, devTopUp } = useCrowns();
   const isAdmin = pathname.startsWith("/admin");
   const balance = getBalance(currentUserId);
   const me = members.find((m) => m.id === currentUserId);
@@ -89,14 +89,23 @@ export function PortalSidebar({ items }: { items: NavItem[] }) {
                   {lvl.isMax ? "Max" : `${lvl.xpToNext} to L${lvl.level + 1}`}
                 </span>
               </div>
-              <button
-                onClick={() => navigate(isAdmin ? "/admin/crowns" : "/staff/profile")}
-                className="mt-1.5 w-full flex items-center gap-1 text-[10px] text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
-              >
-                <Crown className="h-3 w-3 text-crown" />
-                <span className="font-semibold text-crown tabular-nums">{formatCrowns(balance)}</span>
-                <span>Crowns</span>
-              </button>
+              <div className="mt-1.5 flex items-center gap-1">
+                <button
+                  onClick={() => navigate(isAdmin ? "/admin/crowns" : "/staff/profile")}
+                  className="flex-1 flex items-center gap-1 text-[10px] text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
+                >
+                  <Crown className="h-3 w-3 text-crown" />
+                  <span className="font-semibold text-crown tabular-nums">{formatCrowns(balance)}</span>
+                  <span>Crowns</span>
+                </button>
+                <button
+                  onClick={() => devTopUp(me.id, me.name, 500)}
+                  title="Prototype: add 500 Crowns for testing"
+                  className="h-5 px-1.5 rounded border border-sidebar-border text-[10px] font-semibold text-sidebar-foreground/60 hover:text-crown hover:border-crown transition-colors"
+                >
+                  +500
+                </button>
+              </div>
             </div>
           </div>
         )}

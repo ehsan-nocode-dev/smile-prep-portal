@@ -37,6 +37,7 @@ interface CrownsContextValue {
   updateProduct: (id: string, p: Partial<StoreProduct>) => void;
   deleteProduct: (id: string) => void;
   markNotificationsRead: () => void;
+  devTopUp: (userId: string, userName: string, amount?: number) => void;
 }
 
 const CrownsContext = createContext<CrownsContextValue | null>(null);
@@ -272,6 +273,31 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
         ),
       deleteProduct: (id) => setProducts((prev) => prev.filter((p) => p.id !== id)),
       markNotificationsRead: () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
+      devTopUp: (userId, userName, amount = 500) => {
+        let balanceAfter = 0;
+        setAccounts((prev) => {
+          const acc = prev[userId] ?? { ...EMPTY_ACCOUNT };
+          balanceAfter = acc.crownBalance + amount;
+          return {
+            ...prev,
+            [userId]: {
+              crownBalance: balanceAfter,
+              totalCrownsEarned: acc.totalCrownsEarned + amount,
+              totalCrownsSpent: acc.totalCrownsSpent,
+            },
+          };
+        });
+        setTransactions((prev) => [
+          ...prev,
+          {
+            id: `ct-top-${Date.now()}`,
+            userId, userName, type: "earned", source: "submission_approved",
+            amount, balanceAfter,
+            referenceId: "dev-top-up", referenceLabel: "Prototype top-up",
+            createdAt: now(),
+          },
+        ]);
+      },
     }),
     [products, transactions, notifications, pendingFulfilments, getAccount, getBalance, getTransactions, awardCrowns, redeemProduct, markFulfilled]
   );
