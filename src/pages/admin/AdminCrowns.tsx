@@ -5,12 +5,32 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/crowns/SearchableSelect";
 import { useStore } from "@/lib/store";
 import { useCrowns } from "@/contexts/CrownsContext";
-import { CrownTransactionType, SOURCE_LABELS, formatCrowns, formatTxDate } from "@/lib/crowns";
+import {
+  CrownTransaction, CrownTransactionType, FulfilmentStatus, SOURCE_LABELS, formatCrowns, formatTxDate,
+} from "@/lib/crowns";
 import { cn } from "@/lib/utils";
 
 const PAGE = 25;
+
+function ActivityCell({ t }: { t: CrownTransaction }) {
+  const status = t.type === "spent" ? t.fulfilmentStatus ?? "not_required" : undefined;
+  return (
+    <>
+      <div className="font-normal">{t.referenceLabel}</div>
+      <div className="text-xs text-muted-foreground">
+        {SOURCE_LABELS[t.source]}
+        {t.redemptionReference && (
+          <> · <span className="font-mono">{t.redemptionReference}</span></>
+        )}
+        {status === "pending" && <> · <span className="text-warning font-medium">Pending</span></>}
+        {status === "fulfilled" && <> · <span className="text-success font-medium">Fulfilled</span></>}
+      </div>
+    </>
+  );
+}
 
 export default function AdminCrowns() {
   const { members } = useStore();
@@ -18,57 +38,61 @@ export default function AdminCrowns() {
   const [userId, setUserId] = useState("all");
   const [productId, setProductId] = useState("all");
   const [type, setType] = useState<CrownTransactionType | "all">("all");
+  const [status, setStatus] = useState<FulfilmentStatus | "all">("all");
   const [page, setPage] = useState(0);
 
-  const productDisabled = type === "earned";
+  const disabledForEarned = type === "earned";
 
   const rows = useMemo(
     () =>
       getTransactions({
         userId: userId === "all" ? undefined : userId,
-        productId: productId === "all" || productDisabled ? undefined : productId,
+        productId: productId === "all" || disabledForEarned ? undefined : productId,
         type,
+        status: disabledForEarned ? "all" : status,
       }),
-    [getTransactions, userId, productId, type, productDisabled]
+    [getTransactions, userId, productId, type, status, disabledForEarned]
   );
 
-  const filtered = userId !== "all" || productId !== "all" || type !== "all";
+  const filtered = userId !== "all" || productId !== "all" || type !== "all" || status !== "all";
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const current = Math.min(page, pages - 1);
   const shown = rows.slice(current * PAGE, current * PAGE + PAGE);
 
-  const reset = () => { setUserId("all"); setProductId("all"); setType("all"); setPage(0); };
+  const reset = () => { setUserId("all"); setProductId("all"); setType("all"); setStatus("all"); setPage(0); };
+
+  const userOptions = [
+    { value: "all", label: "All users" },
+    ...members.map((m) => ({ value: m.id, label: m.name })),
+  ];
+  const productOptions = [
+    { value: "all", label: "All products" },
+    ...products.map((p) => ({ value: p.id, label: p.title })),
+  ];
 
   return (
     <div>
       <PageHeader title="Crown History" subtitle="Every Crown earned and spent across the practice." />
 
-      <div className="grid gap-4 sm:grid-cols-3 pb-4 border-b border-border/60">
+      <div className="grid gap-4 sm:grid-cols-4 pb-4 border-b border-border/60">
         <div className="space-y-1.5">
           <Label className="text-xs">User</Label>
-          <Select value={userId} onValueChange={(v) => { setUserId(v); setPage(0); }}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All users</SelectItem>
-              {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={userId}
+            options={userOptions}
+            onChange={(v) => { setUserId(v); setPage(0); }}
+            placeholder="All users"
+          />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Product</Label>
-          <Select
+          <Label className={cn("text-xs", disabledForEarned && "opacity-50")}>Product</Label>
+          <SearchableSelect
             value={productId}
-            disabled={productDisabled}
-            onValueChange={(v) => { setProductId(v); setPage(0); }}
-          >
-            <SelectTrigger className={cn(productDisabled && "opacity-50 cursor-not-allowed")}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All products</SelectItem>
-              {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
+            options={productOptions}
+            disabled={disabledForEarned}
+            onChange={(v) => { setProductId(v); setPage(0); }}
+            placeholder="All products"
+          />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Type</Label>
@@ -78,6 +102,24 @@ export default function AdminCrowns() {
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="earned">Earned</SelectItem>
               <SelectItem value="spent">Spent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className={cn("text-xs", disabledForEarned && "opacity-50")}>Status</Label>
+          <Select
+            value={status}
+            disabled={disabledForEarned}
+            onValueChange={(v) => { setStatus(v as FulfilmentStatus | "all"); setPage(0); }}
+          >
+            <SelectTrigger className={cn(disabledForEarned && "opacity-50 cursor-not-allowed")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="fulfilled">Fulfilled</SelectItem>
+              <SelectItem value="not_required">No fulfilment needed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -107,38 +149,41 @@ export default function AdminCrowns() {
             </tr>
           </thead>
           <tbody>
-            {shown.map((t) => (
-              <tr key={t.id} className="border-t border-border/50 hover:bg-muted/30 transition-colors">
-                <td className="px-4 h-16 align-middle">
-                  <div className="flex items-center gap-2.5 whitespace-nowrap">
-                    <span className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0">
-                      {t.userName.charAt(0)}
-                    </span>
-                    <span className="font-medium">{t.userName}</span>
-                  </div>
-                </td>
-                <td className="px-4 h-16 align-middle">
-                  <div className="font-medium">{t.referenceLabel}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {SOURCE_LABELS[t.source]}
-                    {t.redemptionReference && (
-                      <> · <span className="font-mono">{t.redemptionReference}</span></>
-                    )}
-                  </div>
-                </td>
-                <td className="px-4 h-16 align-middle text-muted-foreground whitespace-nowrap">
-                  {formatTxDate(t.createdAt)}
-                </td>
-                <td
+            {shown.map((t) => {
+              const pending = t.type === "spent" && t.fulfilmentStatus === "pending";
+              return (
+                <tr
+                  key={t.id}
                   className={cn(
-                    "px-4 h-16 align-middle text-right font-semibold tabular-nums",
-                    t.type === "earned" ? "text-success" : "text-destructive"
+                    "border-t border-border/50 hover:bg-muted/30 transition-colors",
+                    pending && "border-l-[3px] border-l-warning"
                   )}
                 >
-                  {t.type === "earned" ? "+" : "−"}{formatCrowns(t.amount)}
-                </td>
-              </tr>
-            ))}
+                  <td className="px-4 h-16 align-middle">
+                    <div className="flex items-center gap-2.5 whitespace-nowrap">
+                      <span className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {t.userName.charAt(0)}
+                      </span>
+                      <span className="font-medium">{t.userName}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 h-16 align-middle">
+                    <ActivityCell t={t} />
+                  </td>
+                  <td className="px-4 h-16 align-middle text-muted-foreground whitespace-nowrap">
+                    {formatTxDate(t.createdAt)}
+                  </td>
+                  <td
+                    className={cn(
+                      "px-4 h-16 align-middle text-right font-semibold tabular-nums",
+                      t.type === "earned" ? "text-success" : "text-destructive"
+                    )}
+                  >
+                    {t.type === "earned" ? "+" : "−"}{formatCrowns(t.amount)}
+                  </td>
+                </tr>
+              );
+            })}
             {rows.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
