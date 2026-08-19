@@ -55,13 +55,7 @@ export default function StaffStore() {
     <div>
       <PageHeader
         title="Crown Store"
-        subtitle="Spend the Crowns you've earned on real rewards."
-        actions={
-          <div className="inline-flex items-center gap-2 rounded-full bg-card card-shadow px-4 h-10 font-bold">
-            <Crown className="h-4 w-4 text-crown" />
-            <span className="tabular-nums">{formatCrowns(balance)}</span>
-          </div>
-        }
+        subtitle={`Spend the Crowns you've earned — you have ${formatCrowns(balance)} available.`}
       />
 
       <div className="flex items-center gap-3 mb-6 flex-wrap">
