@@ -13,8 +13,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useStore } from "@/lib/store";
-import { BadgeTier, Department, Status, TIERS, Task } from "@/lib/mock-data";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { BadgeTier, Department, Status, TIERS, Task, getCrownValue } from "@/lib/mock-data";
+import { Crown, Pencil, Plus, Trash2 } from "lucide-react";
 
 const departments: Department[] = ["Assistant", "Hygienist", "Business Associate", "Manager"];
 
@@ -38,7 +38,6 @@ function TaskForm({
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [baseXp, setBaseXp] = useState<number>(initial?.baseXp || 10);
-  const [crownValue, setCrownValue] = useState<number>(initial?.crownValue ?? 5);
   const [department, setDepartment] = useState<Department>(initial?.department || "Assistant");
   const [status, setStatus] = useState<Status>(initial?.status || "Active");
   const [badges, setBadges] = useState<BadgeTier[]>(initial?.badges || blankBadges);
@@ -57,10 +56,6 @@ function TaskForm({
         <div className="space-y-1.5">
           <Label>XP</Label>
           <Input type="number" value={baseXp} onChange={(e) => setBaseXp(+e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Crowns per completion</Label>
-          <Input type="number" min={0} value={crownValue} onChange={(e) => setCrownValue(+e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label>Department</Label>
@@ -134,7 +129,7 @@ function TaskForm({
       <DialogFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button
-          onClick={() => onSubmit({ name, description, baseXp, crownValue, department, status, badges })}
+          onClick={() => onSubmit({ name, description, baseXp, department, status, badges })}
           disabled={!name.trim()}
         >
           {submitLabel}
@@ -179,7 +174,7 @@ export default function AdminTasks() {
               <th className="text-left px-4 py-3 font-semibold">Department</th>
               <th className="text-left px-4 py-3 font-semibold">Badges</th>
               <th className="text-left px-4 py-3 font-semibold">XP</th>
-              <th className="text-left px-4 py-3 font-semibold">Crowns</th>
+              <th className="text-right px-4 py-3 font-semibold">Crowns</th>
               <th className="text-left px-4 py-3 font-semibold">Status</th>
               <th className="text-right px-4 py-3 font-semibold">Action</th>
             </tr>
@@ -194,7 +189,12 @@ export default function AdminTasks() {
                 <td className="px-4 py-3">{t.department}</td>
                 <td className="px-4 py-3"><TierGroup tiers={t.badges.map((b) => b.tier)} size="sm" /></td>
                 <td className="px-4 py-3 font-bold text-xp">{t.baseXp} XP</td>
-                <td className="px-4 py-3 font-bold text-crown">{t.crownValue} Crowns</td>
+                <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Crown className="h-3.5 w-3.5 text-crown/70" />
+                    {getCrownValue(t.baseXp)}
+                  </span>
+                </td>
                 <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">

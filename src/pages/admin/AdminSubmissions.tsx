@@ -13,6 +13,7 @@ import { useCrowns } from "@/contexts/CrownsContext";
 import { formatCrowns } from "@/lib/crowns";
 import { toast } from "sonner";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
+import { getCrownValue } from "@/lib/mock-data";
 import { Check, Pencil, X } from "lucide-react";
 
 export default function AdminSubmissions() {
@@ -42,7 +43,7 @@ export default function AdminSubmissions() {
 
     // Crowns: awarded once, only on approval
     if (sub.status !== "Approved" && task) {
-      const crowns = (task.crownValue ?? 0) * sub.quantity;
+      const crowns = getCrownValue(task.baseXp) * sub.quantity;
       if (crowns > 0) {
         awardCrowns({
           userId: sub.submittedById,
@@ -106,7 +107,10 @@ export default function AdminSubmissions() {
                 <td className="px-4 py-3 font-semibold">{s.taskName}</td>
                 <td className="px-4 py-3">x{s.quantity}</td>
                 <td className="px-4 py-3 font-bold text-crown">
-                  {(tasks.find((t) => t.id === s.taskId)?.crownValue ?? 0) * s.quantity}
+                  {(() => {
+                    const t = tasks.find((tk) => tk.id === s.taskId);
+                    return t ? getCrownValue(t.baseXp) * s.quantity : 0;
+                  })()}
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                 <td className="px-4 py-3">{s.submittedByName}</td>
