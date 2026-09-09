@@ -110,7 +110,7 @@ export const initialMembers: Member[] = [
   { id: "admin1", name: "Dr. Admin", email: "admin@molarup.com", department: "Manager", role: "Admin", status: "Active", joined: "2023-06-01" },
 ];
 
-export const initialSubmissions: Submission[] = [
+const baseSubmissions: Submission[] = [
   { id: "s1", taskId: "t1", taskName: "Crown Prep", quantity: 6, status: "Approved", submittedById: "m1", submittedByName: "Test", date: "2025-04-10", reviewedBy: "Dr. Admin", reviewedDate: "2025-04-11", xpEarned: 150 },
   { id: "s2", taskId: "t2", taskName: "Crown Delivery", quantity: 5, status: "Approved", submittedById: "m2", submittedByName: "Ehsan", date: "2025-04-09", reviewedBy: "Dr. Admin", reviewedDate: "2025-04-10", xpEarned: 100 },
   { id: "s3", taskId: "t3", taskName: "Clean Windows", quantity: 2, status: "Rejected", submittedById: "m3", submittedByName: "Arham Ali", date: "2025-04-08", reviewedBy: "Dr. Admin", reviewedDate: "2025-04-09", xpEarned: 0 },
@@ -118,3 +118,62 @@ export const initialSubmissions: Submission[] = [
   { id: "s5", taskId: "t2", taskName: "Crown Delivery", quantity: 4, status: "Pending", submittedById: "m4", submittedByName: "Uzair Farhan", date: "2025-04-14", xpEarned: 80 },
   { id: "s6", taskId: "t1", taskName: "Crown Prep", quantity: 2, status: "Approved", submittedById: "m1", submittedByName: "Test", date: "2025-04-05", reviewedBy: "Dr. Admin", reviewedDate: "2025-04-06", xpEarned: 50 },
 ];
+
+// ---- Seeded recent history so trend charts have realistic data ----
+const isoDay = (d: Date) => d.toISOString().split("T")[0];
+
+function seedRecentSubmissions(): Submission[] {
+  const out: Submission[] = [];
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  // Deterministic pseudo-random
+  let seed = 42;
+  const rnd = () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+
+  const people: { id: string; name: string }[] = [
+    { id: "m1", name: "Test" },
+    { id: "m2", name: "Ehsan" },
+    { id: "m3", name: "Arham Ali" },
+    { id: "m4", name: "Uzair Farhan" },
+  ];
+
+  let n = 0;
+  // 12 weeks back through today
+  for (let dayBack = 83; dayBack >= 0; dayBack--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - dayBack);
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) continue; // weekdays only
+
+    for (const person of people) {
+      // main demo user logs more often; last week busier than this week
+      let chance = person.id === "m1" ? 0.75 : 0.3;
+      if (person.id === "m1" && dayBack < 7) chance = 0.5;
+      if (rnd() > chance) continue;
+
+      const task = initialTasks[Math.floor(rnd() * initialTasks.length)];
+      const quantity = 1 + Math.floor(rnd() * 3);
+      out.push({
+        id: `sg${++n}`,
+        taskId: task.id,
+        taskName: task.name,
+        quantity,
+        status: "Approved",
+        submittedById: person.id,
+        submittedByName: person.name,
+        date: isoDay(d),
+        reviewedBy: "Dr. Admin",
+        reviewedDate: isoDay(d),
+        xpEarned: task.baseXp * quantity,
+      });
+    }
+  }
+  return out;
+}
+
+export const initialSubmissions: Submission[] = [...baseSubmissions, ...seedRecentSubmissions()];
+
