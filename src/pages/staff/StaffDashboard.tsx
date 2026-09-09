@@ -2,15 +2,22 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { BadgePortfolio } from "@/components/BadgePortfolio";
+import { LevelCard } from "@/components/stats/LevelCard";
+import { ClosestBadgeCard, HighestBadgeCard } from "@/components/stats/BadgeHighlights";
+import { XpTrendCard } from "@/components/stats/XpTrendCard";
+import { LogDistributionCard } from "@/components/stats/LogDistributionCard";
 import { useStore } from "@/lib/store";
 import { FileStack, CheckCircle2, Clock, Award } from "lucide-react";
+import { approvedFor, closestBadge, highestBadge, taskDistribution } from "@/lib/stats";
 
 export default function StaffDashboard() {
   const { submissions, tasks, currentUserId } = useStore();
   const mine = submissions.filter((s) => s.submittedById === currentUserId);
   const total = mine.length;
-  const approved = mine.filter((s) => s.status === "Approved").length;
+  const approvedSubs = approvedFor(submissions, currentUserId);
+  const approved = approvedSubs.length;
   const pending = mine.filter((s) => s.status === "Pending").length;
+  const totalXp = approvedSubs.reduce((sum, s) => sum + s.xpEarned, 0);
 
   // Badges earned across all tasks (approved-only)
   const approvedByTask = (taskId: string) =>
@@ -19,6 +26,10 @@ export default function StaffDashboard() {
     const a = approvedByTask(t.id);
     return sum + t.badges.filter((b) => a >= b.tracks).length;
   }, 0);
+
+  const nearest = closestBadge(approvedSubs, tasks);
+  const best = highestBadge(approvedSubs, tasks);
+  const slices = taskDistribution(approvedSubs, tasks);
 
   const recent = [...mine]
     .filter((s) => s.status === "Approved")
@@ -29,16 +40,34 @@ export default function StaffDashboard() {
     <div>
       <PageHeader title="Dashboard" subtitle="View your activity and progress at a glance." />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <StatCard label="Total Submissions" value={total} tint="blue" icon={<FileStack className="h-6 w-6" />} />
         <StatCard label="Approved Submissions" value={approved} tint="green" icon={<CheckCircle2 className="h-6 w-6" />} />
         <StatCard label="Pending Submissions" value={pending} tint="yellow" icon={<Clock className="h-6 w-6" />} />
         <StatCard label="Badges Earned" value={badges} tint="gray" icon={<Award className="h-6 w-6" />} />
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <LevelCard totalXp={totalXp} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <ClosestBadgeCard badge={nearest} />
+          <HighestBadgeCard badge={best} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+        <div className="lg:col-span-3">
+          <XpTrendCard subs={approvedSubs} />
+        </div>
+        <div className="lg:col-span-2">
+          <LogDistributionCard slices={slices} />
+        </div>
+      </div>
+
       <div className="mb-8">
         <BadgePortfolio tasks={tasks} submissions={submissions} userId={currentUserId} />
       </div>
+
 
       <section className="bg-card rounded-xl card-shadow p-6">
         <h2 className="text-lg font-bold mb-4">Recent Activity</h2>
