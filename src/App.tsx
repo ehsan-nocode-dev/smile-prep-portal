@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/lib/store";
 import { CelebrationProvider } from "@/contexts/CelebrationContext";
 import { CrownsProvider } from "@/contexts/CrownsContext";
+import { ClinicsProvider } from "@/contexts/ClinicsContext";
+import AdminClinics from "./pages/admin/AdminClinics";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -35,6 +37,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <StoreProvider>
+      <ClinicsProvider>
       <CrownsProvider>
       <CelebrationProvider>
         <TooltipProvider>
@@ -54,6 +57,7 @@ const App = () => (
               <Route path="crowns" element={<AdminCrowns />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
               <Route path="profile" element={<AdminProfile />} />
+              <Route path="clinics" element={<AdminClinics />} />
               <Route path="members/:memberId" element={<MemberProfile />} />
             </Route>
 
@@ -73,6 +77,7 @@ const App = () => (
         </TooltipProvider>
       </CelebrationProvider>
       </CrownsProvider>
+      </ClinicsProvider>
     </StoreProvider>
   </QueryClientProvider>
 );
