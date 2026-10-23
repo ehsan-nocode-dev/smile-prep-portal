@@ -7,19 +7,15 @@ import { useStore } from "@/lib/store";
 export function ChallengeWinWatcher() {
   const { currentUserId } = useStore();
   const { unseenWins, markWinSeen } = useChallenges();
-  const wins = unseenWins(currentUserId);
-  const first = wins[0];
+  const { celebrate } = useCelebration();
+  const first = unseenWins(currentUserId)[0];
 
   useEffect(() => {
     if (!first) return;
-    const t = setTimeout(() => {
-      celebrate("team_goal_complete", { amount: first.amount, challengeName: first.challenge.name });
-    }, 400);
     markWinSeen(first.challenge.id, currentUserId);
-    return () => clearTimeout(t);
+    celebrate("team_goal_complete", { amount: first.amount, challengeName: first.challenge.name });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [first?.challenge.id, currentUserId]);
 
-  const { celebrate } = useCelebration();
   return null;
 }
