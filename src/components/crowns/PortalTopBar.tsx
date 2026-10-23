@@ -7,6 +7,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChallengeChip } from "@/components/challenges/ChallengeChip";
 
 export function PortalTopBar({ portal }: { portal: "admin" | "staff" }) {
   const { currentUserId } = useStore();
@@ -15,6 +16,7 @@ export function PortalTopBar({ portal }: { portal: "admin" | "staff" }) {
 
   return (
     <header className="flex items-center justify-end gap-3 mb-6">
+      <ChallengeChip portal={portal} />
       {portal === "admin" && (
         <Popover onOpenChange={(o) => o && markNotificationsRead()}>
           <PopoverTrigger asChild>
