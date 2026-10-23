@@ -12,6 +12,7 @@ import { useCelebration } from "@/contexts/CelebrationContext";
 import { useCrowns } from "@/contexts/CrownsContext";
 import { useChallenges } from "@/contexts/ChallengesContext";
 import { boostedCrowns, fmtMultiplier } from "@/lib/challenges";
+import { LiveGoalStrip } from "@/components/challenges/LiveGoalStrip";
 import { formatCrowns } from "@/lib/crowns";
 import { toast } from "sonner";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
@@ -107,6 +108,8 @@ export default function AdminSubmissions() {
   return (
     <div>
       <PageHeader title="Submissions" subtitle="Review, approve, and manage all user submissions." />
+
+      <LiveGoalStrip />
 
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">

@@ -264,5 +264,5 @@ function seedChallengeSubmissions(): Submission[] {
   });
 }
 
-export const initialSubmissions: Submission[] = [...baseSubmissions, ...seedRecentSubmissions(), ...seedChallengeSubmissions()];
+export const initialSubmissions: Submission[] = [...baseSubmissions, ...seedChallengeSubmissions(), ...seedRecentSubmissions()];
 
