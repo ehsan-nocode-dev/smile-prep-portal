@@ -219,13 +219,14 @@ export function CelebrationProvider({ children }: { children: ReactNode }) {
 function ToastCelebration({ item, onClose }: { item: ToastItem; onClose: () => void }) {
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setLeaving(true), 3200);
-    const t2 = setTimeout(onClose, 3700);
+    const stay = item.type === "team_goal" ? 6000 : 3200;
+    const t = setTimeout(() => setLeaving(true), stay);
+    const t2 = setTimeout(onClose, stay + 500);
     return () => {
       clearTimeout(t);
       clearTimeout(t2);
     };
-  }, [onClose]);
+  }, [onClose, item.type]);
 
   const isApproved = item.type === "task_approved" || item.type === "team_goal";
   const isTeam = item.type === "team_goal";
