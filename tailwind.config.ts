@@ -126,6 +126,10 @@ export default {
         "check-draw": {
           to: { strokeDashoffset: "0" },
         },
+        "chip-glow": {
+          "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.45)" },
+          "100%": { boxShadow: "0 0 0 10px hsl(var(--primary) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
