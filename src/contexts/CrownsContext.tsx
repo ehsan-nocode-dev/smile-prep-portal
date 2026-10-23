@@ -127,25 +127,28 @@ export function CrownsProvider({ children }: { children: ReactNode }) {
     [transactions]
   );
 
+  // Ref mirrors accounts so several awards in one tick (e.g. a boost bonus or a
+  // team payout to many people) each see the previous award's balance.
+  const accountsRef = useRef(accounts);
+  accountsRef.current = accounts;
+
   const awardCrowns: CrownsContextValue["awardCrowns"] = useCallback(
-    ({ userId, userName, amount, referenceId, referenceLabel }) => {
+    ({ userId, userName, amount, referenceId, referenceLabel, source = "submission_approved" }) => {
       if (amount <= 0) return null;
-      let created: CrownTransaction | null = null;
-      setAccounts((prev) => {
-        const acc = prev[userId] ?? { ...EMPTY_ACCOUNT };
-        const next: CrownAccount = {
-          crownBalance: acc.crownBalance + amount,
-          totalCrownsEarned: acc.totalCrownsEarned + amount,
-          totalCrownsSpent: acc.totalCrownsSpent,
-        };
-        created = {
-          id: `ct-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          userId, userName, type: "earned", source: "submission_approved",
-          amount, balanceAfter: next.crownBalance, referenceId, referenceLabel, createdAt: now(),
-        };
-        return { ...prev, [userId]: next };
-      });
-      setTransactions((prev) => (created ? [...prev, created] : prev));
+      const acc = accountsRef.current[userId] ?? { ...EMPTY_ACCOUNT };
+      const next: CrownAccount = {
+        crownBalance: acc.crownBalance + amount,
+        totalCrownsEarned: acc.totalCrownsEarned + amount,
+        totalCrownsSpent: acc.totalCrownsSpent,
+      };
+      accountsRef.current = { ...accountsRef.current, [userId]: next };
+      const created: CrownTransaction = {
+        id: `ct-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        userId, userName, type: "earned", source,
+        amount, balanceAfter: next.crownBalance, referenceId, referenceLabel, createdAt: now(),
+      };
+      setAccounts((prev) => ({ ...prev, [userId]: next }));
+      setTransactions((prev) => [...prev, created]);
       return created;
     },
     []
