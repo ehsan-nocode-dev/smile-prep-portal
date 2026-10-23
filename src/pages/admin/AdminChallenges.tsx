@@ -9,28 +9,16 @@ import { EmailLog } from "@/components/challenges/EmailLog";
 import { useChallenges } from "@/contexts/ChallengesContext";
 import { useStore } from "@/lib/store";
 import { formatCrowns } from "@/lib/crowns";
-import { Task } from "@/lib/mock-data";
 import {
   Challenge,
-  boostTaskIds,
-  fmtDay,
-  fmtDayTime,
+  boostTaskLabel,
+  challengeDates,
   fmtMultiplier,
+  paidStats,
   getPhase,
   goalProgress,
   timeLeft,
 } from "@/lib/challenges";
-
-export const challengeDates = (c: Challenge) =>
-  c.kind === "boost" ? `${fmtDay(c.startAt)} – ${fmtDay(c.endAt)}` : `${fmtDayTime(c.startAt)} – ${fmtDayTime(c.endAt)}`;
-
-export const boostTaskLabel = (c: Challenge, tasks: Task[]) =>
-  c.allTasks ? "All tasks" : boostTaskIds(c, tasks).map((id) => tasks.find((t) => t.id === id)?.name ?? "Task").join(", ");
-
-export const paidStats = (c: Challenge) => ({
-  crowns: c.payouts.reduce((n, p) => n + p.amount, 0),
-  people: new Set(c.payouts.map((p) => p.userId)).size,
-});
 
 export default function AdminChallenges() {
   const navigate = useNavigate();

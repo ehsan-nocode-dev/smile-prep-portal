@@ -260,6 +260,17 @@ export const RESULT_LABELS: Record<ChallengeResult, string> = {
   completed: "Completed",
 };
 
+export const challengeDates = (c: Challenge) =>
+  c.kind === "boost" ? `${fmtDay(c.startAt)} – ${fmtDay(c.endAt)}` : `${fmtDayTime(c.startAt)} – ${fmtDayTime(c.endAt)}`;
+
+export const boostTaskLabel = (c: Challenge, tasks: Task[]) =>
+  c.allTasks ? "All tasks" : boostTaskIds(c, tasks).map((id) => tasks.find((t) => t.id === id)?.name ?? "Task").join(", ");
+
+export const paidStats = (c: Challenge) => ({
+  crowns: c.payouts.reduce((n, p) => n + p.amount, 0),
+  people: new Set(c.payouts.map((p) => p.userId)).size,
+});
+
 /* ---------------- Emails (simulated) ---------------- */
 
 const taskName = (tasks: Task[], id: string) => tasks.find((x) => x.id === id)?.name ?? "Task";
