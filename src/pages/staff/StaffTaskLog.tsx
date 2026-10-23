@@ -32,7 +32,7 @@ export default function StaffTaskLog() {
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
   const [qty, setQty] = useState(1);
   const [successFor, setSuccessFor] = useState<{ task: Task; approvedCount: number; boost?: number } | null>(null);
-  const { challenges, now } = useChallenges();
+  const { challenges, now, boostForSubmission } = useChallenges();
   const boostOf = (taskId: string) => liveBoostFor(challenges, taskId, now)?.multiplier;
 
   const mine = useMemo(() => submissions.filter((s) => s.submittedById === currentUserId), [submissions, currentUserId]);
@@ -157,7 +157,14 @@ export default function StaffTaskLog() {
                         <h3 className="font-bold">{s.taskName}</h3>
                         <p className="text-xs text-muted-foreground">Submitted on {s.date}</p>
                       </div>
-                      <StatusBadge status={s.status} />
+                      <div className="flex items-center gap-2">
+                        {s.status === "Pending" && boostForSubmission(s) && (
+                          <span className="text-xs font-bold text-crown bg-crown/15 px-2 py-0.5 rounded-full">
+                            Boosted {fmtMultiplier(boostForSubmission(s)!.multiplier ?? 1)}
+                          </span>
+                        )}
+                        <StatusBadge status={s.status} />
+                      </div>
                     </div>
                     <div className="flex items-center gap-4 mt-3 flex-wrap">
                       <span className="text-sm font-semibold">x{s.quantity}</span>
