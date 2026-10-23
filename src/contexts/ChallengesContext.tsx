@@ -69,13 +69,10 @@ export function ChallengesProvider({ children }: { children: ReactNode }) {
       if (c.clinicId !== clinicId) continue;
 
       // E1 for challenges whose start time has just passed
-      if (!c.startEmailSent && !c.result && at >= new Date(c.startAt).getTime()) {
+      if (!c.startEmailSent && !c.result && at >= new Date(c.startAt).getTime() && !closing.current.has(`${c.id}:e1`)) {
         closing.current.add(`${c.id}:e1`);
         setChallenges((p) => p.map((x) => (x.id === c.id ? { ...x, startEmailSent: true } : x)));
-        if (!closing.current.has(`${c.id}:e1-sent`)) {
-          closing.current.add(`${c.id}:e1-sent`);
-          addEmails([buildStartEmail(c, tasks, staff, iso())]);
-        }
+        addEmails([buildStartEmail(c, tasks, staff, iso())]);
       }
 
       if (c.kind !== "team_goal" || c.result || closing.current.has(c.id)) continue;
