@@ -1,8 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from "react";
 import {
   AdminNotification,
   CrownAccount,
   CrownTransaction,
+  CrownTransactionSource,
   StoreProduct,
   TransactionFilters,
   buildSeedTransactions,
@@ -30,6 +31,7 @@ interface CrownsContextValue {
   getTransactions: (filters?: TransactionFilters) => CrownTransaction[];
   awardCrowns: (args: {
     userId: string; userName: string; amount: number; referenceId: string; referenceLabel: string;
+    source?: CrownTransactionSource;
   }) => CrownTransaction | null;
   redeemProduct: (productId: string, userId: string, userName: string) => RedeemResult;
   markFulfilled: (transactionId: string, fulfilledBy: string) => void;
