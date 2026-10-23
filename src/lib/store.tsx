@@ -44,7 +44,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     deleteMember: (id) => setMembers((p) => p.filter((x) => x.id !== id)),
     addSubmission: (s) => setSubmissions((p) => [
       ...p,
-      { ...s, id: `s${Date.now()}`, date: new Date().toISOString().split("T")[0], status: "Pending" as const },
+      { ...s, id: `s${Date.now()}`, date: new Date().toISOString().split("T")[0], submittedAt: new Date().toISOString(), status: "Pending" as const },
     ]),
     updateSubmissionStatus: (id, status, reviewer) => setSubmissions((p) =>
       p.map((x) => (x.id === id ? { ...x, status, reviewedBy: reviewer, reviewedDate: new Date().toISOString().split("T")[0] } : x))

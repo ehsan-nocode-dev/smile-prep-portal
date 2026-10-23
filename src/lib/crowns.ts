@@ -8,7 +8,8 @@ export type CrownTransactionSource =
   | "submission_approved"
   | "store_purchase"
   | "admin_bonus" // reserved
-  | "level_up"; // reserved
+  | "level_up" // reserved
+  | "challenge_bonus";
 
 export type FulfilmentStatus = "not_required" | "pending" | "fulfilled";
 
@@ -80,6 +81,7 @@ export const SOURCE_LABELS: Record<CrownTransactionSource, string> = {
   store_purchase: "Store purchase",
   admin_bonus: "Admin bonus",
   level_up: "Level up reward",
+  challenge_bonus: "Challenge bonus",
 };
 
 export const FULFILMENT_LABELS: Record<FulfilmentStatus, string> = {

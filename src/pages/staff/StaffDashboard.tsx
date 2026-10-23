@@ -7,6 +7,7 @@ import { ClosestBadgeCard, HighestBadgeCard } from "@/components/stats/BadgeHigh
 import { XpTrendCard } from "@/components/stats/XpTrendCard";
 import { LogDistributionCard } from "@/components/stats/LogDistributionCard";
 import { useStore } from "@/lib/store";
+import { StaffChallengesSection } from "@/components/challenges/StaffChallengesSection";
 import { FileStack, CheckCircle2, Clock, Award } from "lucide-react";
 import { approvedFor, closestBadge, highestBadge, taskDistribution } from "@/lib/stats";
 
@@ -39,6 +40,8 @@ export default function StaffDashboard() {
   return (
     <div>
       <PageHeader title="Dashboard" subtitle="View your activity and progress at a glance." />
+
+      <StaffChallengesSection />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         <StatCard label="Total Submissions" value={total} tint="blue" icon={<FileStack className="h-6 w-6" />} />

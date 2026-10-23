@@ -10,6 +10,9 @@ import {
 import { useStore } from "@/lib/store";
 import { useCelebration } from "@/contexts/CelebrationContext";
 import { useCrowns } from "@/contexts/CrownsContext";
+import { useChallenges } from "@/contexts/ChallengesContext";
+import { boostedCrowns, fmtMultiplier } from "@/lib/challenges";
+import { LiveGoalStrip } from "@/components/challenges/LiveGoalStrip";
 import { formatCrowns } from "@/lib/crowns";
 import { toast } from "sonner";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
@@ -20,6 +23,7 @@ export default function AdminSubmissions() {
   const { submissions, tasks, updateSubmissionStatus, updateSubmissionQuantity, members, currentUserId } = useStore();
   const { celebrate } = useCelebration();
   const { awardCrowns } = useCrowns();
+  const { boostForSubmission, recordBoostPayout } = useChallenges();
   const reviewer = members.find((m) => m.id === currentUserId)?.name || "Admin";
   const [editing, setEditing] = useState<{ id: string; quantity: number } | null>(null);
 
@@ -44,6 +48,10 @@ export default function AdminSubmissions() {
     // Crowns: awarded once, only on approval
     if (sub.status !== "Approved" && task) {
       const crowns = getCrownValue(task.baseXp) * sub.quantity;
+      // Boost: judged by submission time, so it still applies if the Boost has since ended
+      const boost = boostForSubmission(sub);
+      const total = boost ? boostedCrowns(crowns, boost.multiplier ?? 1) : crowns;
+      const extra = total - crowns;
       if (crowns > 0) {
         awardCrowns({
           userId: sub.submittedById,
@@ -52,8 +60,21 @@ export default function AdminSubmissions() {
           referenceId: sub.id,
           referenceLabel: `${sub.taskName} x${sub.quantity}`,
         });
-        toast.success(`${sub.submittedByName} earned ${formatCrowns(crowns)} Crowns`, {
-          description: `${sub.taskName} x${sub.quantity} approved.`,
+        if (boost && extra > 0) {
+          awardCrowns({
+            userId: sub.submittedById,
+            userName: sub.submittedByName,
+            amount: extra,
+            referenceId: boost.id,
+            referenceLabel: `${boost.name} · ${fmtMultiplier(boost.multiplier ?? 1)} Boost`,
+            source: "challenge_bonus",
+          });
+          recordBoostPayout(boost.id, sub.submittedById, sub.submittedByName, extra);
+        }
+        toast.success(`${sub.submittedByName} earned ${formatCrowns(total)} Crowns`, {
+          description: boost
+            ? `${sub.taskName} x${sub.quantity} approved, boosted ${fmtMultiplier(boost.multiplier ?? 1)} by ${boost.name}.`
+            : `${sub.taskName} x${sub.quantity} approved.`,
         });
       }
     }
@@ -88,6 +109,8 @@ export default function AdminSubmissions() {
     <div>
       <PageHeader title="Submissions" subtitle="Review, approve, and manage all user submissions." />
 
+      <LiveGoalStrip />
+
       <div className="bg-card rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -109,7 +132,15 @@ export default function AdminSubmissions() {
                 <td className="px-4 py-3 font-bold text-crown">
                   {(() => {
                     const t = tasks.find((tk) => tk.id === s.taskId);
-                    return t ? getCrownValue(t.baseXp) * s.quantity : 0;
+                    const normal = t ? getCrownValue(t.baseXp) * s.quantity : 0;
+                    const boost = boostForSubmission(s);
+                    if (!boost) return normal;
+                    return (
+                      <>
+                        {boostedCrowns(normal, boost.multiplier ?? 1)}
+                        <span className="ml-1.5 text-xs font-semibold text-muted-foreground">{fmtMultiplier(boost.multiplier ?? 1)}</span>
+                      </>
+                    );
                   })()}
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={s.status} /></td>

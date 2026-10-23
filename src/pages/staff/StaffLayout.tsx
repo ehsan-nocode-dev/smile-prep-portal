@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { PortalSidebar, NavItem } from "@/components/PortalSidebar";
 import { PortalTopBar } from "@/components/crowns/PortalTopBar";
+import { ChallengeWinWatcher } from "@/components/challenges/ChallengeWinWatcher";
 import { LayoutDashboard, ClipboardList, Trophy, UserCircle2, Store } from "lucide-react";
 
 const items: NavItem[] = [
@@ -17,6 +18,7 @@ export default function StaffLayout() {
       <PortalSidebar items={items} />
       <main className="flex-1 min-w-0 p-8 overflow-x-auto">
         <PortalTopBar portal="staff" />
+        <ChallengeWinWatcher />
         <Outlet />
       </main>
     </div>
