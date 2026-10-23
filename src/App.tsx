@@ -8,6 +8,9 @@ import { CelebrationProvider } from "@/contexts/CelebrationContext";
 import { CrownsProvider } from "@/contexts/CrownsContext";
 import { ClinicsProvider } from "@/contexts/ClinicsContext";
 import AdminClinics from "./pages/admin/AdminClinics";
+import { ChallengesProvider } from "@/contexts/ChallengesContext";
+import AdminChallenges from "./pages/admin/AdminChallenges";
+import AdminChallengeDetail from "./pages/admin/AdminChallengeDetail";
 
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -39,6 +42,7 @@ const App = () => (
     <StoreProvider>
       <ClinicsProvider>
       <CrownsProvider>
+      <ChallengesProvider>
       <CelebrationProvider>
         <TooltipProvider>
           <Toaster />
@@ -53,6 +57,8 @@ const App = () => (
               <Route path="submissions" element={<AdminSubmissions />} />
               <Route path="team" element={<AdminTeam />} />
               <Route path="store" element={<AdminStore />} />
+              <Route path="challenges" element={<AdminChallenges />} />
+              <Route path="challenges/:challengeId" element={<AdminChallengeDetail />} />
               <Route path="fulfil" element={<AdminFulfil />} />
               <Route path="crowns" element={<AdminCrowns />} />
               <Route path="leaderboard" element={<AdminLeaderboard />} />
@@ -76,6 +82,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </CelebrationProvider>
+      </ChallengesProvider>
       </CrownsProvider>
       </ClinicsProvider>
     </StoreProvider>

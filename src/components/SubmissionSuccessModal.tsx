@@ -16,10 +16,12 @@ interface Props {
   task: Task | null;
   /** Approved completions count for this task BEFORE this submission. */
   approvedCount: number;
+  /** Set when the task is in a running Boost. */
+  boostMultiplier?: number;
   onClose: () => void;
 }
 
-export function SubmissionSuccessModal({ open, task, approvedCount, onClose }: Props) {
+export function SubmissionSuccessModal({ open, task, approvedCount, boostMultiplier, onClose }: Props) {
   const [progress, setProgress] = useState(0);
   const subtitle = useMemo(
     () => MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)],
@@ -87,6 +89,12 @@ export function SubmissionSuccessModal({ open, task, approvedCount, onClose }: P
           <h2 className="text-2xl font-extrabold">Task Submitted! 💪</h2>
           <p className="text-sm text-muted-foreground mt-1.5">{subtitle}</p>
         </div>
+
+        {boostMultiplier && (
+          <div className="mt-4 rounded-xl bg-crown/10 px-4 py-3 text-center text-sm font-semibold text-foreground">
+            Boosted task! You'll earn {boostMultiplier}x crowns once it's approved.
+          </div>
+        )}
 
         {/* Pending pill */}
         <div className="flex justify-center mt-4">

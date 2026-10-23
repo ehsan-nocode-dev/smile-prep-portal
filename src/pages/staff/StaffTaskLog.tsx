@@ -9,6 +9,8 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
+import { useChallenges } from "@/contexts/ChallengesContext";
+import { fmtMultiplier, liveBoostFor } from "@/lib/challenges";
 import { SubmissionSuccessModal } from "@/components/SubmissionSuccessModal";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -29,7 +31,9 @@ export default function StaffTaskLog() {
   const [tab, setTab] = useState<Tab>("all");
   const [submitFor, setSubmitFor] = useState<Task | null>(null);
   const [qty, setQty] = useState(1);
-  const [successFor, setSuccessFor] = useState<{ task: Task; approvedCount: number } | null>(null);
+  const [successFor, setSuccessFor] = useState<{ task: Task; approvedCount: number; boost?: number } | null>(null);
+  const { challenges, now } = useChallenges();
+  const boostOf = (taskId: string) => liveBoostFor(challenges, taskId, now)?.multiplier;
 
   const mine = useMemo(() => submissions.filter((s) => s.submittedById === currentUserId), [submissions, currentUserId]);
   const totalXp = mine.filter((s) => s.status === "Approved").reduce((sum, s) => sum + s.xpEarned, 0);
@@ -57,7 +61,7 @@ export default function StaffTaskLog() {
       submittedByName: me.name,
       xpEarned: xp,
     });
-    setSuccessFor({ task: submitFor, approvedCount });
+    setSuccessFor({ task: submitFor, approvedCount, boost: boostOf(submitFor.id) });
     setSubmitFor(null);
     setQty(1);
   };
@@ -111,7 +115,12 @@ export default function StaffTaskLog() {
                         <h3 className="font-bold text-lg">{t.name}</h3>
                         <p className="text-sm text-muted-foreground mt-0.5">{t.description}</p>
                       </div>
-                      <span className="text-xs font-bold text-xp bg-xp/10 px-2 py-1 rounded">+{t.baseXp} XP</span>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-xs font-bold text-xp bg-xp/10 px-2 py-1 rounded">+{t.baseXp} XP</span>
+                        {boostOf(t.id) && (
+                          <span className="text-xs font-bold text-crown bg-crown/15 px-2 py-1 rounded">Boosted {fmtMultiplier(boostOf(t.id)!)}</span>
+                        )}
+                      </div>
                     </div>
 
                     {next && (
@@ -220,6 +229,7 @@ export default function StaffTaskLog() {
         open={!!successFor}
         task={successFor?.task ?? null}
         approvedCount={successFor?.approvedCount ?? 0}
+        boostMultiplier={successFor?.boost}
         onClose={() => setSuccessFor(null)}
       />
     </div>
