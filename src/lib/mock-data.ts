@@ -57,6 +57,8 @@ export interface Submission {
   submittedById: string;
   submittedByName: string;
   date: string;
+  /** Exact submission time (ISO). Older seed rows only have `date`. */
+  submittedAt?: string;
   reviewedBy?: string;
   reviewedDate?: string;
   xpEarned: number;
@@ -97,6 +99,33 @@ export const initialTasks: Task[] = [
     description: "Clean operatory windows thoroughly.",
     department: "Assistant",
     baseXp: 50,
+    status: "Active",
+    badges: defaultBadges(),
+  },
+  {
+    id: "t4",
+    name: "Patient Call",
+    description: "Call a patient to confirm, recall or follow up.",
+    department: "Business Associate",
+    baseXp: 5,
+    status: "Active",
+    badges: defaultBadges(),
+  },
+  {
+    id: "t5",
+    name: "Insurance Claim",
+    description: "Prepare and submit an insurance claim.",
+    department: "Business Associate",
+    baseXp: 10,
+    status: "Active",
+    badges: defaultBadges(),
+  },
+  {
+    id: "t6",
+    name: "Filling",
+    description: "Assist with a completed filling.",
+    department: "Assistant",
+    baseXp: 30,
     status: "Active",
     badges: defaultBadges(),
   },
@@ -155,7 +184,9 @@ function seedRecentSubmissions(): Submission[] {
       if (person.id === "m1" && dayBack < 7) chance = 0.5;
       if (rnd() > chance) continue;
 
-      const task = initialTasks[Math.floor(rnd() * initialTasks.length)];
+      // history uses the original three tasks so existing demo charts stay unchanged
+      const historyTasks = initialTasks.slice(0, 3);
+      const task = historyTasks[Math.floor(rnd() * historyTasks.length)];
       const quantity = 1 + Math.floor(rnd() * 3);
       out.push({
         id: `sg${++n}`,
@@ -175,5 +206,63 @@ function seedRecentSubmissions(): Submission[] {
   return out;
 }
 
-export const initialSubmissions: Submission[] = [...baseSubmissions, ...seedRecentSubmissions()];
+// ---- Challenges demo anchors (relative to "now" so the demo always looks live) ----
+function startOfIsoWeek(d: Date) {
+  const x = new Date(d);
+  const dow = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - dow);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+export const DEMO_ANCHORS = (() => {
+  const now = new Date();
+  const boostStart = startOfIsoWeek(now);
+  const boostEnd = new Date(boostStart);
+  boostEnd.setDate(boostEnd.getDate() + 6);
+  boostEnd.setHours(23, 59, 0, 0);
+  const goalStart = new Date(now);
+  goalStart.setDate(goalStart.getDate() - 2);
+  goalStart.setHours(8, 0, 0, 0);
+  const goalEnd = new Date(now);
+  goalEnd.setDate(goalEnd.getDate() + 2);
+  goalEnd.setHours(18, 0, 0, 0);
+  return { now, boostStart, boostEnd, goalStart, goalEnd };
+})();
+
+/** Logs for the live "Big Push" Team Goal: part approved, the rest pending so approvals complete it. */
+function seedChallengeSubmissions(): Submission[] {
+  const { now, boostStart, goalStart } = DEMO_ANCHORS;
+  const people: Record<string, string> = { m1: "Test", m2: "Ehsan", m3: "Arham Ali", m4: "Uzair Farhan" };
+  const at = (lo: Date, f: number) => {
+    const span = Math.max(0, now.getTime() - lo.getTime() - 60 * 60000);
+    return new Date(lo.getTime() + span * f);
+  };
+  const fillingFloor = boostStart > goalStart ? boostStart : goalStart;
+  const rows: [string, string, number, SubmissionStatus, number][] = [
+    // [taskId, userId, quantity, status, position in window 0..1]
+    ["t4", "m1", 6, "Approved", 0.05], ["t4", "m2", 6, "Approved", 0.15], ["t4", "m3", 5, "Approved", 0.3], ["t4", "m4", 5, "Approved", 0.45],
+    ["t5", "m2", 5, "Approved", 0.1], ["t5", "m3", 4, "Approved", 0.35], ["t5", "m4", 4, "Approved", 0.5],
+    ["t6", "m1", 3, "Approved", 0.2], ["t6", "m4", 2, "Approved", 0.4],
+    ["t4", "m1", 4, "Pending", 0.8], ["t4", "m2", 5, "Pending", 0.9],
+    ["t5", "m1", 4, "Pending", 0.75], ["t5", "m3", 3, "Pending", 0.85],
+    ["t6", "m1", 2, "Pending", 0.7], ["t6", "m2", 2, "Pending", 0.95],
+  ];
+  return rows.map(([taskId, userId, quantity, status, f], i) => {
+    const task = initialTasks.find((t) => t.id === taskId)!;
+    const when = at(taskId === "t6" ? fillingFloor : goalStart, f);
+    return {
+      id: `cg${i + 1}`,
+      taskId, taskName: task.name, quantity, status,
+      submittedById: userId, submittedByName: people[userId],
+      date: isoDay(when),
+      submittedAt: when.toISOString(),
+      reviewedBy: status === "Approved" ? "Dr. Admin" : undefined,
+      reviewedDate: status === "Approved" ? isoDay(when) : undefined,
+      xpEarned: task.baseXp * quantity,
+    };
+  });
+}
+
+export const initialSubmissions: Submission[] = [...baseSubmissions, ...seedRecentSubmissions(), ...seedChallengeSubmissions()];
 
