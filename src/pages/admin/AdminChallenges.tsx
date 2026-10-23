@@ -53,7 +53,7 @@ export default function AdminChallenges() {
             {active.map((c) => {
               const progress = c.kind === "team_goal" ? goalProgress(c, submissions) : null;
               return (
-                <button key={c.id} onClick={() => open(c)} className="text-left bg-card rounded-xl card-shadow p-6 hover:ring-1 hover:ring-primary/40 transition">
+                <button key={c.id} onClick={() => open(c)} className="flex flex-col text-left bg-card rounded-xl card-shadow p-6 hover:ring-1 hover:ring-primary/40 transition">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <KindLabel kind={c.kind} />
@@ -67,8 +67,11 @@ export default function AdminChallenges() {
 
                   {c.kind === "boost" ? (
                     <div className="mt-5 text-sm">
-                      <span className="font-semibold">{boostTaskLabel(c, tasks)}</span> earn{" "}
-                      <span className="font-semibold text-crown">{fmtMultiplier(c.multiplier ?? 1)} crowns</span>
+                      <span className="font-semibold text-crown">{fmtMultiplier(c.multiplier ?? 1)} crowns</span> on{" "}
+                      <span className="font-semibold">{boostTaskLabel(c, tasks)}</span>
+                      {paidStats(c).crowns > 0 && (
+                        <span className="text-muted-foreground"> · {formatCrowns(paidStats(c).crowns)} extra paid so far</span>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-5 space-y-3">
@@ -139,7 +142,7 @@ export default function AdminChallenges() {
                       ) : (
                         <div className="space-y-0.5">
                           {(c.targets ?? []).map((t) => (
-                            <div key={t.taskId} className="tabular-nums">
+                            <div key={t.taskId} className="tabular-nums whitespace-nowrap">
                               {taskName(t.taskId)}: {c.achieved?.[t.taskId] ?? 0} / {t.quantity}
                             </div>
                           ))}
