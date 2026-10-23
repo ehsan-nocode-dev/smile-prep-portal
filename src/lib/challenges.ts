@@ -419,3 +419,78 @@ export function buildSeedChallenges(clinicId: string, tasks: Task[], members: Me
 
   return { challenges, emails };
 }
+
+/* ---------------- Header chip ---------------- */
+
+/** Average % across targets, each capped at 100. */
+export function goalPercent(p: GoalProgress): number {
+  if (p.targets.length === 0) return 0;
+  const sum = p.targets.reduce((n, r) => n + Math.min(100, (r.achieved / Math.max(1, r.target)) * 100), 0);
+  return Math.min(100, Math.round(sum / p.targets.length));
+}
+
+/** Whether a person already qualifies for the live Team Goal bonus. */
+export function userGoalStatus(goal: Challenge, submissions: Submission[], userId: string): "helped" | "pending" | "none" {
+  const ids = new Set((goal.targets ?? []).map((x) => x.taskId));
+  const mine = submissions.filter((s) => s.submittedById === userId && ids.has(s.taskId) && inWindow(submittedAtOf(s), goal));
+  if (mine.some((s) => s.status === "Approved")) return "helped";
+  if (mine.some((s) => s.status === "Pending")) return "pending";
+  return "none";
+}
+
+const sameLocalDay = (a: number, b: number) => new Date(a).toDateString() === new Date(b).toDateString();
+
+export const UPCOMING_WINDOW_MS = 24 * 3600000;
+
+export interface ChipState {
+  /** Live Team Goal with its overall %. */
+  goal: { challenge: Challenge; pct: number; awaitingReviews: boolean } | null;
+  /** Team Goal met earlier today (shown only when no goal is live). */
+  met: Challenge | null;
+  boosts: Challenge[];
+  /** Challenges starting within 24h, only when nothing is live or just met. */
+  upcoming: Challenge[];
+}
+
+/** What the header chip shows. Null = no chip. Not-met goals never show. */
+export function challengeChip(challenges: Challenge[], submissions: Submission[], now: number = Date.now()): ChipState | null {
+  const live = challenges.filter((c) => getPhase(c, now) === "active");
+  const liveGoal = live.find((c) => c.kind === "team_goal") ?? null;
+  const boosts = live.filter((c) => c.kind === "boost");
+  const met = liveGoal
+    ? null
+    : challenges
+        .filter((c) => c.kind === "team_goal" && c.result === "met" && c.closedAt && sameLocalDay(t(c.closedAt), now) && t(c.closedAt) <= now)
+        .sort((a, b) => t(b.closedAt!) - t(a.closedAt!))[0] ?? null;
+  const upcoming =
+    liveGoal || met || boosts.length
+      ? []
+      : challenges
+          .filter((c) => getPhase(c, now) === "scheduled" && t(c.startAt) - now <= UPCOMING_WINDOW_MS)
+          .sort((a, b) => t(a.startAt) - t(b.startAt));
+
+  if (!liveGoal && !met && boosts.length === 0 && upcoming.length === 0) return null;
+  return {
+    goal: liveGoal
+      ? { challenge: liveGoal, pct: goalPercent(goalProgress(liveGoal, submissions)), awaitingReviews: now > t(liveGoal.endAt) }
+      : null,
+    met,
+    boosts,
+    upcoming,
+  };
+}
+
+/** Compact "3h left" / "2d left" / "20m left". */
+export function shortTimeLeft(iso: string, now: number = Date.now()) {
+  const mins = Math.floor((t(iso) - now) / 60000);
+  if (mins <= 0) return "Ended";
+  if (mins >= 1440) return `${Math.floor(mins / 1440)}d left`;
+  if (mins >= 60) return `${Math.floor(mins / 60)}h left`;
+  return `${mins}m left`;
+}
+
+/** "Starts in 5h" / "Starts in 40m". */
+export function startsIn(iso: string, now: number = Date.now()) {
+  const mins = Math.max(1, Math.ceil((t(iso) - now) / 60000));
+  return mins >= 60 ? `Starts in ${Math.floor(mins / 60)}h` : `Starts in ${mins}m`;
+}

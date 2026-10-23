@@ -126,6 +126,10 @@ export default {
         "check-draw": {
           to: { strokeDashoffset: "0" },
         },
+        "chip-glow": {
+          "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.45)" },
+          "100%": { boxShadow: "0 0 0 10px hsl(var(--primary) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -140,6 +144,7 @@ export default {
         "bg-pulse": "bg-pulse 2.5s ease-in-out infinite",
         "check-pop": "check-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "check-draw": "check-draw 0.4s ease-out 0.3s forwards",
+        "chip-glow": "chip-glow 1.1s ease-out 2",
       },
     },
   },
