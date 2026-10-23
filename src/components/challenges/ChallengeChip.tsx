@@ -59,12 +59,16 @@ export function ChallengeChip({ portal }: { portal: Portal }) {
   const goal = state?.goal;
   const progressKey = goal ? goalProgress(goal.challenge, submissions).targets.reduce((n, r) => n + r.achieved, 0) : null;
   const prev = useRef<{ id: string; v: number } | null>(null);
-  const [glow, setGlow] = useState(0);
+  const [glow, setGlow] = useState(false);
   useEffect(() => {
     if (!goal || progressKey === null) { prev.current = null; return; }
     const p = prev.current;
-    if (p && p.id === goal.challenge.id && progressKey > p.v) setGlow((g) => g + 1);
     prev.current = { id: goal.challenge.id, v: progressKey };
+    if (p && p.id === goal.challenge.id && progressKey > p.v) {
+      setGlow(true);
+      const id = setTimeout(() => setGlow(false), 2300);
+      return () => clearTimeout(id);
+    }
   }, [goal?.challenge.id, progressKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!state) return null;
@@ -116,11 +120,10 @@ export function ChallengeChip({ portal }: { portal: Portal }) {
 
   const trigger = (
     <button
-      key={glow}
       className={cn(
         "inline-flex items-center gap-2 rounded-full card-shadow px-4 h-10 hover:bg-muted transition-colors",
         tone,
-        glow > 0 && "animate-chip-glow"
+        glow && "animate-chip-glow"
       )}
       aria-label="Challenges"
     >
