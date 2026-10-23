@@ -11,7 +11,8 @@ export type CelebrationType =
   | "task_approved"
   | "badge_unlocked"
   | "level_up"
-  | "xp_gained";
+  | "xp_gained"
+  | "team_goal_complete";
 
 export interface CelebrationData {
   amount?: number;
@@ -19,6 +20,7 @@ export interface CelebrationData {
   tier?: Tier;
   level?: number;
   taskName?: string;
+  challengeName?: string;
 }
 
 interface CelebrationContextValue {
@@ -57,6 +59,7 @@ const MESSAGES: Record<CelebrationType, { title: string; subtitle: string }[]> =
     { title: "Unstoppable", subtitle: "Seriously. Don't stop now." },
   ],
   xp_gained: [{ title: "", subtitle: "" }],
+  team_goal_complete: [{ title: "Team challenge complete!", subtitle: "" }],
 };
 
 const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -73,7 +76,7 @@ export function levelToTier(level: number): Tier {
 
 interface ToastItem {
   id: number;
-  type: "task_submitted" | "task_approved";
+  type: "task_submitted" | "task_approved" | "team_goal";
   title: string;
   subtitle: string;
 }
@@ -140,6 +143,19 @@ export function CelebrationProvider({ children }: { children: ReactNode }) {
         case "badge_unlocked": {
           setBadge({ id, badgeName: data.badgeName ?? "New Badge", tier: data.tier });
           fireConfetti(false);
+          break;
+        }
+        case "team_goal_complete": {
+          setToasts((q) => [
+            ...q,
+            {
+              id,
+              type: "team_goal",
+              title: "Team challenge complete!",
+              subtitle: `You earned ${data.amount ?? 0} bonus crowns${data.challengeName ? ` in ${data.challengeName}` : ""}.`,
+            },
+          ]);
+          fireConfetti(true);
           break;
         }
         case "level_up": {
@@ -211,9 +227,10 @@ function ToastCelebration({ item, onClose }: { item: ToastItem; onClose: () => v
     };
   }, [onClose]);
 
-  const isApproved = item.type === "task_approved";
-  const accent = isApproved ? "bg-success" : "bg-primary";
-  const tone = isApproved ? "bg-success/15 text-success" : "bg-primary/15 text-primary";
+  const isApproved = item.type === "task_approved" || item.type === "team_goal";
+  const isTeam = item.type === "team_goal";
+  const accent = isTeam ? "bg-crown" : isApproved ? "bg-success" : "bg-primary";
+  const tone = isTeam ? "bg-crown/15 text-crown" : isApproved ? "bg-success/15 text-success" : "bg-primary/15 text-primary";
 
   return (
     <div
