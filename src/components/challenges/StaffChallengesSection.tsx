@@ -20,7 +20,7 @@ export function StaffChallengesSection() {
   return (
     <section className="mb-6">
       <h2 className="text-lg font-bold mb-3">Challenges</h2>
-      <div className={goal && boosts.length ? "grid gap-5 lg:grid-cols-[1fr_340px]" : "grid gap-5"}>
+      <div className={goal && boosts.length ? "grid gap-5 lg:grid-cols-[1fr_340px] lg:items-start" : "grid gap-5"}>
         {goal && progress && (
           <div className="bg-card rounded-xl card-shadow p-6">
             <div className="flex items-start justify-between gap-3">
