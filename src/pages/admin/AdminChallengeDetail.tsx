@@ -4,26 +4,22 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { StatusBadge } from "@/components/StatusBadge";
 import { ChallengeFormDialog } from "@/components/challenges/ChallengeFormDialog";
 import { ChallengeStatus, KindLabel, TargetBar } from "@/components/challenges/ChallengeBits";
 import { useChallenges } from "@/contexts/ChallengesContext";
 import { useStore } from "@/lib/store";
 import { formatCrowns } from "@/lib/crowns";
 import {
-  boostTaskIds,
   boostTaskLabel,
-  boostedCrowns,
   challengeDates,
-  findBoostFor,
   fmtMultiplier,
+  fmtStart,
   getPhase,
   goalProgress,
+  isEditable,
   maxGoalCost,
-  normalCrownsFor,
   paidStats,
   staffOf,
-  submittedAtOf,
   timeLeft,
 } from "@/lib/challenges";
 
@@ -50,22 +46,21 @@ export default function AdminChallengeDetail() {
   const staff = staffOf(members);
   const progress = c.kind === "team_goal" ? goalProgress(c, submissions) : null;
 
-  const boostIds = c.kind === "boost" ? boostTaskIds(c, tasks) : [];
-  const boostedLogs =
-    c.kind === "boost"
-      ? submissions
-          .filter((s) => boostIds.includes(s.taskId) && findBoostFor([c], s.taskId, submittedAtOf(s)))
-          .sort((a, b) => submittedAtOf(b).localeCompare(submittedAtOf(a)))
-      : [];
+  const startedNotice = () => toast.error(`${c.name} has started, so it can't be edited or deleted. You can end it early.`);
+
+  const openEdit = () => (isEditable(c) ? setEditing(true) : startedNotice());
 
   const doConfirm = () => {
     if (confirm === "end") {
       endEarly(c.id);
-      toast.success(`${c.name} ended.`);
+      toast.success(`${c.name} ended.`, { description: `Email sent to all staff (${staff.length}).` });
     } else if (confirm === "delete") {
-      deleteChallenge(c.id);
-      toast.success(`${c.name} deleted.`);
-      navigate("/admin/challenges");
+      if (deleteChallenge(c.id)) {
+        toast.success(`${c.name} deleted.`);
+        navigate("/admin/challenges");
+      } else {
+        startedNotice();
+      }
     }
     setConfirm(null);
   };
@@ -158,61 +153,31 @@ export default function AdminChallengeDetail() {
       )}
 
       {c.kind === "boost" && (
-        <div className="space-y-6">
-          <section className="bg-card rounded-xl card-shadow p-6 grid sm:grid-cols-3 gap-6">
+        <section className="bg-card rounded-xl card-shadow p-6 grid sm:grid-cols-3 gap-6">
+          <div>
+            <div className="text-sm text-muted-foreground">Tasks</div>
+            <div className="font-semibold mt-1">{boostTaskLabel(c, tasks)}</div>
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground">Multiplier</div>
+            <div className="font-semibold mt-1 text-crown">{fmtMultiplier(c.multiplier ?? 1)} crowns</div>
+          </div>
+          {phase === "scheduled" ? (
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Tasks</div>
-              <div className="font-semibold mt-1">{boostTaskLabel(c, tasks)}</div>
+              <div className="text-sm text-muted-foreground">Starts</div>
+              <div className="font-semibold mt-1 tabular-nums">{fmtStart(c.startAt)}</div>
             </div>
+          ) : (
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Multiplier</div>
-              <div className="font-semibold mt-1 text-crown">{fmtMultiplier(c.multiplier ?? 1)} crowns</div>
+              <div className="text-sm text-muted-foreground">Extra crowns paid</div>
+              <div className="font-semibold mt-1 tabular-nums">
+                {paid.crowns === 0
+                  ? "None yet"
+                  : `${formatCrowns(paid.crowns)} crowns · ${paid.people} ${paid.people === 1 ? "person" : "people"}`}
+              </div>
             </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Extra crowns paid</div>
-              <div className="font-semibold mt-1 tabular-nums">{formatCrowns(paid.crowns)} to {paid.people} {paid.people === 1 ? "person" : "people"}</div>
-            </div>
-          </section>
-
-          <section className="bg-card rounded-xl card-shadow overflow-hidden">
-            <div className="px-6 pt-5 pb-3">
-              <h2 className="font-bold">Boosted logs</h2>
-              <p className="text-sm text-muted-foreground">Logs submitted during the Boost. Extra crowns are paid on approval.</p>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="text-left px-6 py-2 font-semibold">Staff</th>
-                  <th className="text-left px-6 py-2 font-semibold">Task</th>
-                  <th className="text-left px-6 py-2 font-semibold">Status</th>
-                  <th className="text-right px-6 py-2 font-semibold">Crowns</th>
-                </tr>
-              </thead>
-              <tbody>
-                {boostedLogs.map((s) => {
-                  const task = tasks.find((t) => t.id === s.taskId);
-                  const normal = task ? normalCrownsFor(task, s.quantity) : 0;
-                  const total = boostedCrowns(normal, c.multiplier ?? 1);
-                  return (
-                    <tr key={s.id} className="border-t border-border/50">
-                      <td className="px-6 py-3 font-medium">{s.submittedByName}</td>
-                      <td className="px-6 py-3">{s.taskName} x{s.quantity}</td>
-                      <td className="px-6 py-3"><StatusBadge status={s.status} /></td>
-                      <td className="px-6 py-3 text-right tabular-nums">
-                        {s.status === "Rejected" ? <span className="text-muted-foreground">—</span> : (
-                          <>{formatCrowns(total)} <span className="text-muted-foreground">({formatCrowns(normal)} + {formatCrowns(total - normal)})</span></>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {boostedLogs.length === 0 && (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">No boosted logs yet.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </section>
-        </div>
+          )}
+        </section>
       )}
 
       <ChallengeFormDialog open={editing} onClose={() => setEditing(false)} editing={c} />
