@@ -460,12 +460,17 @@ export interface ChipState {
   /** Team Goal met earlier today (shown only when no goal is live). */
   met: Challenge | null;
   boosts: Challenge[];
-  /** Challenges starting within 24h, only when nothing is live or just met. */
+  /** Challenges starting within 24h, only when nothing is live or just met. Admins only. */
   upcoming: Challenge[];
 }
 
-/** What the header chip shows. Null = no chip. Not-met goals never show. */
-export function challengeChip(challenges: Challenge[], submissions: Submission[], now: number = Date.now()): ChipState | null {
+/** What the header chip shows. Null = no chip. Not-met goals never show. Staff never see upcoming challenges. */
+export function challengeChip(
+  challenges: Challenge[],
+  submissions: Submission[],
+  now: number = Date.now(),
+  opts: { showUpcoming?: boolean } = {}
+): ChipState | null {
   const live = challenges.filter((c) => getPhase(c, now) === "active");
   const liveGoal = live.find((c) => c.kind === "team_goal") ?? null;
   const boosts = live.filter((c) => c.kind === "boost");
@@ -475,7 +480,7 @@ export function challengeChip(challenges: Challenge[], submissions: Submission[]
         .filter((c) => c.kind === "team_goal" && c.result === "met" && c.closedAt && sameLocalDay(t(c.closedAt), now) && t(c.closedAt) <= now)
         .sort((a, b) => t(b.closedAt!) - t(a.closedAt!))[0] ?? null;
   const upcoming =
-    liveGoal || met || boosts.length
+    !opts.showUpcoming || liveGoal || met || boosts.length
       ? []
       : challenges
           .filter((c) => getPhase(c, now) === "scheduled" && t(c.startAt) - now <= UPCOMING_WINDOW_MS)
