@@ -6,7 +6,9 @@ import { useCrowns } from "@/contexts/CrownsContext";
 import {
   Challenge,
   EmailLogEntry,
+  buildBoostEndedEmail,
   buildCompletedEmail,
+  buildEndedEarlyEmail,
   buildNotMetEmail,
   buildSeedChallenges,
   buildStartEmail,
@@ -14,11 +16,15 @@ import {
   findBoostFor,
   getPhase,
   goalProgress,
+  isEditable,
   staffOf,
 } from "@/lib/challenges";
 import { Submission } from "@/lib/mock-data";
 
-export type ChallengeDraft = Omit<Challenge, "id" | "clinicId" | "createdAt" | "payouts" | "result" | "closedAt" | "achieved" | "startEmailSent">;
+export type ChallengeDraft = Omit<
+  Challenge,
+  "id" | "clinicId" | "createdAt" | "payouts" | "result" | "closedAt" | "achieved" | "startEmailSent" | "endEmailSent"
+>;
 
 interface ChallengesContextValue {
   clinicId: string;
@@ -26,8 +32,10 @@ interface ChallengesContextValue {
   emails: EmailLogEntry[];
   now: number;
   createChallenge: (d: ChallengeDraft) => Challenge;
-  updateChallenge: (id: string, d: ChallengeDraft) => void;
-  deleteChallenge: (id: string) => void;
+  /** False when the challenge has already started (edits are only allowed before the start time). */
+  updateChallenge: (id: string, d: ChallengeDraft) => boolean;
+  /** False when the challenge has already started. */
+  deleteChallenge: (id: string) => boolean;
   endEarly: (id: string) => void;
   boostForSubmission: (s: Submission) => Challenge | null;
   recordBoostPayout: (challengeId: string, userId: string, userName: string, amount: number) => void;
@@ -73,6 +81,13 @@ export function ChallengesProvider({ children }: { children: ReactNode }) {
         closing.current.add(`${c.id}:e1`);
         setChallenges((p) => p.map((x) => (x.id === c.id ? { ...x, startEmailSent: true } : x)));
         addEmails([buildStartEmail(c, tasks, staff, iso())]);
+      }
+
+      // E4 once a Boost reaches its end time (not when it was ended early)
+      if (c.kind === "boost" && !c.endEmailSent && !c.result && at > new Date(c.endAt).getTime() && !closing.current.has(`${c.id}:e4`)) {
+        closing.current.add(`${c.id}:e4`);
+        setChallenges((p) => p.map((x) => (x.id === c.id ? { ...x, endEmailSent: true } : x)));
+        addEmails([buildBoostEndedEmail(c, staff, iso())]);
       }
 
       if (c.kind !== "team_goal" || c.result || closing.current.has(c.id)) continue;
@@ -131,18 +146,30 @@ export function ChallengesProvider({ children }: { children: ReactNode }) {
       emails: [...emails].sort((a, b) => b.at.localeCompare(a.at)),
       now,
       createChallenge,
-      updateChallenge: (id, d) =>
-        setChallenges((p) => p.map((x) => (x.id === id && getPhase(x) === "scheduled" ? { ...x, ...d } : x))),
-      deleteChallenge: (id) => setChallenges((p) => p.filter((x) => !(x.id === id && getPhase(x) === "scheduled"))),
+      updateChallenge: (id, d) => {
+        const c = challenges.find((x) => x.id === id);
+        if (!c || !isEditable(c)) return false;
+        setChallenges((p) => p.map((x) => (x.id === id && isEditable(x) ? { ...x, ...d } : x)));
+        return true;
+      },
+      deleteChallenge: (id) => {
+        const c = challenges.find((x) => x.id === id);
+        if (!c || !isEditable(c)) return false;
+        setChallenges((p) => p.filter((x) => !(x.id === id && isEditable(x))));
+        return true;
+      },
       endEarly: (id) => {
         const c = challenges.find((x) => x.id === id);
         if (!c || getPhase(c) !== "active") return;
         closing.current.add(id);
+        closing.current.add(`${id}:e4`);
         const achieved =
           c.kind === "team_goal"
             ? Object.fromEntries(goalProgress(c, submissions).targets.map((r) => [r.taskId, r.achieved]))
             : undefined;
-        setChallenges((p) => p.map((x) => (x.id === id ? { ...x, result: "ended_early", closedAt: iso(), achieved } : x)));
+        const closed: Challenge = { ...c, result: "ended_early", closedAt: iso(), achieved };
+        setChallenges((p) => p.map((x) => (x.id === id ? closed : x)));
+        addEmails([buildEndedEarlyEmail(closed, tasks, staff, closed.closedAt!)]);
       },
       boostForSubmission: (s) =>
         findBoostFor(challenges.filter((c) => c.clinicId === clinicId), s.taskId, s.submittedAt ?? `${s.date}T12:00:00`),
@@ -161,7 +188,7 @@ export function ChallengesProvider({ children }: { children: ReactNode }) {
       markWinSeen: (challengeId, userId) =>
         setSeen((p) => ({ ...p, [challengeId]: [...(p[challengeId] ?? []), userId] })),
     }),
-    [clinicId, challenges, emails, now, createChallenge, submissions, seen]
+    [clinicId, challenges, emails, now, createChallenge, submissions, seen, tasks, staff, addEmails]
   );
 
   return <ChallengesContext.Provider value={value}>{children}</ChallengesContext.Provider>;

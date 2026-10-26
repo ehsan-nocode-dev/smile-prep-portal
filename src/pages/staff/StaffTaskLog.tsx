@@ -10,8 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
 import { useChallenges } from "@/contexts/ChallengesContext";
-import { fmtMultiplier, liveBoostFor } from "@/lib/challenges";
+import { fmtMultiplier, liveBoostFor, normalCrownsFor } from "@/lib/challenges";
 import { SubmissionSuccessModal } from "@/components/SubmissionSuccessModal";
+import { BoostCrowns, BoostTag } from "@/components/challenges/BoostLogBits";
 import { Task, BadgeTier, Tier } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { Award, CheckCircle2, FileStack, Sparkles, Zap } from "lucide-react";
@@ -150,25 +151,25 @@ export default function StaffTaskLog() {
               {mine.filter((s) => s.status === tab).map((s) => {
                 const task = tasks.find((t) => t.id === s.taskId);
                 const tiers = task ? earnedTiers(task) : [];
+                const boost = boostForSubmission(s);
                 return (
                   <div key={s.id} className="bg-card rounded-xl card-shadow p-5">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
-                        <h3 className="font-bold">{s.taskName}</h3>
+                        <h3 className="font-bold">
+                          {s.taskName}
+                          {boost && <BoostTag boost={boost} />}
+                        </h3>
                         <p className="text-xs text-muted-foreground">Submitted on {s.date}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {s.status === "Pending" && boostForSubmission(s) && (
-                          <span className="text-xs font-bold text-crown bg-crown/15 px-2 py-0.5 rounded-full">
-                            Boosted {fmtMultiplier(boostForSubmission(s)!.multiplier ?? 1)}
-                          </span>
-                        )}
-                        <StatusBadge status={s.status} />
-                      </div>
+                      <StatusBadge status={s.status} />
                     </div>
                     <div className="flex items-center gap-4 mt-3 flex-wrap">
                       <span className="text-sm font-semibold">x{s.quantity}</span>
                       <span className="text-sm font-bold text-xp">+{s.xpEarned} XP</span>
+                      {boost && task && (
+                        <BoostCrowns normal={normalCrownsFor(task, s.quantity)} boost={boost} className="text-sm font-bold text-crown" />
+                      )}
                       <div className="flex-1 min-w-[120px]">
                         <div className="h-2 rounded-full bg-muted overflow-hidden">
                           <div className="h-full bg-primary" style={{ width: s.status === "Approved" ? "100%" : "0%" }} />

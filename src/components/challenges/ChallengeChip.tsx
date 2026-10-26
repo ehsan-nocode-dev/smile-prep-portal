@@ -53,7 +53,8 @@ export function ChallengeChip({ portal }: { portal: Portal }) {
   const { challenges, now } = useChallenges();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const state = challengeChip(challenges, submissions, now);
+  // Staff never see a challenge before it starts; admins keep the muted "Starts in …" chip.
+  const state = challengeChip(challenges, submissions, now, { showUpcoming: portal === "admin" });
 
   // One-time glow when the live goal moves forward (e.g. after an approval).
   const goal = state?.goal;

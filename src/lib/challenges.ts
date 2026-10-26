@@ -44,9 +44,11 @@ export interface Challenge {
   achieved?: Record<string, number>;
   payouts: ChallengePayout[];
   startEmailSent?: boolean;
+  /** E4 sent once a Boost reaches its end time. */
+  endEmailSent?: boolean;
 }
 
-export type EmailKind = "E1" | "E2" | "E3";
+export type EmailKind = "E1" | "E2" | "E3" | "E4" | "E5";
 
 export interface EmailLogEntry {
   id: string;
@@ -83,6 +85,12 @@ export function getResult(c: Challenge, now: number = Date.now()): ChallengeResu
   return null;
 }
 
+/** Edit and delete are allowed only before the start time. Once started, a challenge can only be ended early. */
+export const isEditable = (c: Challenge, now: number = Date.now()) => getPhase(c, now) === "scheduled";
+
+/** Staff only ever see a challenge once it has started. */
+export const visibleToStaff = (c: Challenge, now: number = Date.now()) => getPhase(c, now) !== "scheduled";
+
 const inWindow = (iso: string, c: Challenge) => {
   const x = t(iso);
   return x >= t(c.startAt) && x <= t(effectiveEnd(c));
@@ -99,6 +107,10 @@ const boostCovers = (c: Challenge, taskId: string) => c.allTasks || (c.taskIds ?
 export const boostedCrowns = (normalCrowns: number, multiplier: number) => Math.ceil(normalCrowns * multiplier);
 
 export const normalCrownsFor = (task: Task, quantity: number) => getCrownValue(task.baseXp) * quantity;
+
+/** Inline crown maths for a boosted log, e.g. "4 × 2 = 8". */
+export const boostMath = (normalCrowns: number, multiplier: number) =>
+  `${normalCrowns} × ${multiplier} = ${boostedCrowns(normalCrowns, multiplier)}`;
 
 /** The Boost that applies to a log, judged by when it was SUBMITTED (approval time doesn't matter). */
 export function findBoostFor(challenges: Challenge[], taskId: string, submittedAt: string): Challenge | null {
@@ -240,6 +252,11 @@ export const fmtDayTime = (iso: string) => {
   const d = new Date(iso);
   return `${fmtDay(iso)} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
+/** "Mon 2 Nov, 00:00" */
+export const fmtStart = (iso: string) => {
+  const d = new Date(iso);
+  return `${fmtDay(iso)}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 export const fmtMultiplier = (m: number) => `${m}x`;
 
 export function timeLeft(iso: string, now: number = Date.now()) {
@@ -333,10 +350,49 @@ export function buildNotMetEmail(c: Challenge, tasks: Task[], staff: Member[], a
   };
 }
 
+const allStaff = (staff: Member[]) => ({ toLabel: `All staff (${staff.length})`, recipients: staff.map((m) => m.email) });
+
+/** E4: a Boost reached its end time. */
+export function buildBoostEndedEmail(c: Challenge, staff: Member[], at: string): EmailLogEntry {
+  return {
+    id: `em-${c.id}-e4`,
+    kind: "E4",
+    challengeId: c.id,
+    at,
+    ...allStaff(staff),
+    subject: `${c.name} has ended`,
+    body: [
+      "Hi team,",
+      `${c.name} is over. Thanks to everyone who logged during the Boost.`,
+      `Logs submitted during ${c.name} still get the extra crowns once they're approved.`,
+    ],
+  };
+}
+
+/** E5: an admin ended a Boost or Team Goal early. */
+export function buildEndedEarlyEmail(c: Challenge, tasks: Task[], staff: Member[], at: string): EmailLogEntry {
+  const body =
+    c.kind === "boost"
+      ? [
+          "Hi team,",
+          `${c.name} was ended early by the clinic admin.`,
+          `Logs submitted before it ended still get the extra crowns once they're approved.`,
+        ]
+      : [
+          "Hi team,",
+          `${c.name} was ended early by the clinic admin, so no bonus will be paid.`,
+          ...(c.targets ?? []).map((x) => `${taskName(tasks, x.taskId)}: ${c.achieved?.[x.taskId] ?? 0} / ${x.quantity}`),
+          "Thanks to everyone who logged.",
+        ];
+  return { id: `em-${c.id}-e5`, kind: "E5", challengeId: c.id, at, ...allStaff(staff), subject: `${c.name} has ended early`, body };
+}
+
 export const EMAIL_LABELS: Record<EmailKind, string> = {
   E1: "Challenge started",
   E2: "Team Goal completed",
   E3: "Team Goal not met",
+  E4: "Boost ended",
+  E5: "Challenge ended early",
 };
 
 /* ---------------- Seed data ---------------- */
@@ -402,7 +458,16 @@ export function buildSeedChallenges(clinicId: string, tasks: Task[], members: Me
     startEmailSent: true,
   };
 
-  const challenges = [filling, bigPush, claimsWeek, spring, catchUp, prep];
+  // Past: Boost that ran to its end date
+  const callsWeek: Challenge = {
+    id: "ch-calls-week", clinicId, kind: "boost", name: "Calls Week",
+    startAt: daysFrom(boostStart, -21), endAt: daysFrom(boostStart, -15, 23, 59), createdAt: daysFrom(boostStart, -23, 10),
+    taskIds: ["t4"], multiplier: 1.5,
+    payouts: [payout("m1", 6, daysFrom(boostStart, -20, 15)), payout("m2", 5, daysFrom(boostStart, -18, 11)), payout("m4", 4, daysFrom(boostStart, -16, 14))],
+    startEmailSent: true, endEmailSent: true,
+  };
+
+  const challenges = [filling, bigPush, claimsWeek, spring, catchUp, prep, callsWeek];
 
   const emails: EmailLogEntry[] = [
     buildStartEmail(spring, tasks, staff, spring.startAt),
@@ -411,6 +476,9 @@ export function buildSeedChallenges(clinicId: string, tasks: Task[], members: Me
       return buildCompletedEmail(spring, tasks, m, p.amount, p.at);
     }),
     buildStartEmail(prep, tasks, staff, prep.startAt),
+    buildEndedEarlyEmail(prep, tasks, staff, prep.closedAt!),
+    buildStartEmail(callsWeek, tasks, staff, callsWeek.startAt),
+    buildBoostEndedEmail(callsWeek, staff, callsWeek.endAt),
     buildStartEmail(catchUp, tasks, staff, catchUp.startAt),
     buildNotMetEmail(catchUp, tasks, staff, catchUp.closedAt!),
     buildStartEmail(filling, tasks, staff, filling.startAt),
@@ -448,12 +516,17 @@ export interface ChipState {
   /** Team Goal met earlier today (shown only when no goal is live). */
   met: Challenge | null;
   boosts: Challenge[];
-  /** Challenges starting within 24h, only when nothing is live or just met. */
+  /** Challenges starting within 24h, only when nothing is live or just met. Admins only. */
   upcoming: Challenge[];
 }
 
-/** What the header chip shows. Null = no chip. Not-met goals never show. */
-export function challengeChip(challenges: Challenge[], submissions: Submission[], now: number = Date.now()): ChipState | null {
+/** What the header chip shows. Null = no chip. Not-met goals never show. Staff never see upcoming challenges. */
+export function challengeChip(
+  challenges: Challenge[],
+  submissions: Submission[],
+  now: number = Date.now(),
+  opts: { showUpcoming?: boolean } = {}
+): ChipState | null {
   const live = challenges.filter((c) => getPhase(c, now) === "active");
   const liveGoal = live.find((c) => c.kind === "team_goal") ?? null;
   const boosts = live.filter((c) => c.kind === "boost");
@@ -463,7 +536,7 @@ export function challengeChip(challenges: Challenge[], submissions: Submission[]
         .filter((c) => c.kind === "team_goal" && c.result === "met" && c.closedAt && sameLocalDay(t(c.closedAt), now) && t(c.closedAt) <= now)
         .sort((a, b) => t(b.closedAt!) - t(a.closedAt!))[0] ?? null;
   const upcoming =
-    liveGoal || met || boosts.length
+    !opts.showUpcoming || liveGoal || met || boosts.length
       ? []
       : challenges
           .filter((c) => getPhase(c, now) === "scheduled" && t(c.startAt) - now <= UPCOMING_WINDOW_MS)

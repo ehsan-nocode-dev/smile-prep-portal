@@ -23,6 +23,7 @@ import {
   fmtDay,
   fmtDayTime,
   goalConflict,
+  isEditable,
   maxGoalCost,
   staffOf,
 } from "@/lib/challenges";
@@ -42,7 +43,7 @@ interface Props {
 
 export function ChallengeFormDialog({ open, onClose, editing, onSaved }: Props) {
   const { tasks, members } = useStore();
-  const { challenges, clinicId, createChallenge, updateChallenge } = useChallenges();
+  const { challenges, clinicId, createChallenge, updateChallenge, now } = useChallenges();
   const activeTasks = tasks.filter((t) => t.status === "Active");
   const staff = staffOf(members);
 
@@ -140,6 +141,9 @@ export function ChallengeFormDialog({ open, onClose, editing, onSaved }: Props) 
   const goalValid =
     !!name.trim() && cleanTargets.length > 0 && cleanTargets.length === targets.length && bonus > 0 && !!goalRange && !goalError && !otherGoal;
 
+  // Editing is only allowed before the start time; once started it can only be ended early.
+  const locked = !!editing && !isEditable(editing, now);
+
   const save = () => {
     if (!kind) return;
     const draft =
@@ -147,7 +151,11 @@ export function ChallengeFormDialog({ open, onClose, editing, onSaved }: Props) 
         ? { kind, name: name.trim(), allTasks, taskIds: allTasks ? [] : taskIds, multiplier, ...boostRange! }
         : { kind, name: name.trim(), targets: cleanTargets, bonusPerPerson: bonus, ...goalRange! };
     if (editing) {
-      updateChallenge(editing.id, draft);
+      if (!updateChallenge(editing.id, draft)) {
+        toast.error(`${editing.name} has started, so it can't be edited. You can end it early.`);
+        onClose();
+        return;
+      }
       toast.success(`${draft.name} updated.`);
       onSaved?.(null);
     } else {
@@ -342,11 +350,15 @@ export function ChallengeFormDialog({ open, onClose, editing, onSaved }: Props) 
           </div>
         )}
 
+        {locked && (
+          <p className="text-sm text-destructive">This challenge has started, so it can't be edited. You can still end it early.</p>
+        )}
+
         {kind && (
           <DialogFooter className="gap-2 sm:gap-2">
             {!editing && <Button variant="ghost" onClick={() => setKind(null)} className="mr-auto">Back</Button>}
             <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={save} disabled={kind === "boost" ? !boostValid : !goalValid}>
+            <Button onClick={save} disabled={locked || (kind === "boost" ? !boostValid : !goalValid)}>
               {editing ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
