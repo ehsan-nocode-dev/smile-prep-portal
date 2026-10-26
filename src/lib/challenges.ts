@@ -44,9 +44,11 @@ export interface Challenge {
   achieved?: Record<string, number>;
   payouts: ChallengePayout[];
   startEmailSent?: boolean;
+  /** E4 sent once a Boost reaches its end time. */
+  endEmailSent?: boolean;
 }
 
-export type EmailKind = "E1" | "E2" | "E3";
+export type EmailKind = "E1" | "E2" | "E3" | "E4" | "E5";
 
 export interface EmailLogEntry {
   id: string;
@@ -83,6 +85,12 @@ export function getResult(c: Challenge, now: number = Date.now()): ChallengeResu
   return null;
 }
 
+/** Edit and delete are allowed only before the start time. Once started, a challenge can only be ended early. */
+export const isEditable = (c: Challenge, now: number = Date.now()) => getPhase(c, now) === "scheduled";
+
+/** Staff only ever see a challenge once it has started. */
+export const visibleToStaff = (c: Challenge, now: number = Date.now()) => getPhase(c, now) !== "scheduled";
+
 const inWindow = (iso: string, c: Challenge) => {
   const x = t(iso);
   return x >= t(c.startAt) && x <= t(effectiveEnd(c));
@@ -99,6 +107,10 @@ const boostCovers = (c: Challenge, taskId: string) => c.allTasks || (c.taskIds ?
 export const boostedCrowns = (normalCrowns: number, multiplier: number) => Math.ceil(normalCrowns * multiplier);
 
 export const normalCrownsFor = (task: Task, quantity: number) => getCrownValue(task.baseXp) * quantity;
+
+/** Inline crown maths for a boosted log, e.g. "4 × 2 = 8". */
+export const boostMath = (normalCrowns: number, multiplier: number) =>
+  `${normalCrowns} × ${multiplier} = ${boostedCrowns(normalCrowns, multiplier)}`;
 
 /** The Boost that applies to a log, judged by when it was SUBMITTED (approval time doesn't matter). */
 export function findBoostFor(challenges: Challenge[], taskId: string, submittedAt: string): Challenge | null {
