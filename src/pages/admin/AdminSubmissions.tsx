@@ -13,6 +13,7 @@ import { useCrowns } from "@/contexts/CrownsContext";
 import { useChallenges } from "@/contexts/ChallengesContext";
 import { boostedCrowns, fmtMultiplier } from "@/lib/challenges";
 import { LiveGoalStrip } from "@/components/challenges/LiveGoalStrip";
+import { BoostCrowns, BoostTag } from "@/components/challenges/BoostLogBits";
 import { formatCrowns } from "@/lib/crowns";
 import { toast } from "sonner";
 import { getLevelInfo, getUserTotalXp } from "@/lib/levels";
@@ -125,23 +126,19 @@ export default function AdminSubmissions() {
             </tr>
           </thead>
           <tbody>
-            {submissions.map((s) => (
+            {submissions.map((s) => {
+              const t = tasks.find((tk) => tk.id === s.taskId);
+              const normal = t ? getCrownValue(t.baseXp) * s.quantity : 0;
+              const boost = boostForSubmission(s);
+              return (
               <tr key={s.id} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-3 font-semibold">{s.taskName}</td>
+                <td className="px-4 py-3 font-semibold">
+                  {s.taskName}
+                  {boost && <BoostTag boost={boost} />}
+                </td>
                 <td className="px-4 py-3">x{s.quantity}</td>
                 <td className="px-4 py-3 font-bold text-crown">
-                  {(() => {
-                    const t = tasks.find((tk) => tk.id === s.taskId);
-                    const normal = t ? getCrownValue(t.baseXp) * s.quantity : 0;
-                    const boost = boostForSubmission(s);
-                    if (!boost) return normal;
-                    return (
-                      <>
-                        {boostedCrowns(normal, boost.multiplier ?? 1)}
-                        <span className="ml-1.5 text-xs font-semibold text-muted-foreground">{fmtMultiplier(boost.multiplier ?? 1)}</span>
-                      </>
-                    );
-                  })()}
+                  {boost ? <BoostCrowns normal={normal} boost={boost} /> : normal}
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                 <td className="px-4 py-3">{s.submittedByName}</td>
@@ -172,7 +169,8 @@ export default function AdminSubmissions() {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
