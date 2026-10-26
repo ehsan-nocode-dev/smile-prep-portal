@@ -87,8 +87,8 @@ export default function AdminChallengeDetail() {
           {phase === "active" && <Button variant="outline" onClick={() => setConfirm("end")}>End early</Button>}
           {phase === "scheduled" && (
             <>
-              <Button variant="outline" onClick={() => setConfirm("delete")}>Delete</Button>
-              <Button onClick={() => setEditing(true)}>Edit</Button>
+              <Button variant="outline" onClick={() => (isEditable(c) ? setConfirm("delete") : startedNotice())}>Delete</Button>
+              <Button onClick={openEdit}>Edit</Button>
             </>
           )}
         </div>
