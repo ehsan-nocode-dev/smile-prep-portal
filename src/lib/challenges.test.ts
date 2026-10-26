@@ -2,15 +2,20 @@ import { describe, expect, it } from "vitest";
 import {
   Challenge,
   boostConflicts,
+  boostMath,
   boostedCrowns,
+  buildBoostEndedEmail,
+  buildEndedEarlyEmail,
   departmentsWithoutBoost,
   evaluateGoal,
   findBoostFor,
   goalConflict,
   goalProgress,
+  isEditable,
   maxGoalCost,
+  visibleToStaff,
 } from "./challenges";
-import { Submission, Task, getCrownValue } from "./mock-data";
+import { Member, Submission, Task, getCrownValue } from "./mock-data";
 
 const task = (id: string, department: Task["department"], baseXp = 10): Task => ({
   id, name: id, description: "", department, baseXp, status: "Active", badges: [],
@@ -113,5 +118,52 @@ describe("Team Goal", () => {
 
   it("shows max cost as staff × bonus", () => {
     expect(maxGoalCost(11, 100)).toBe(1100);
+  });
+});
+
+describe("Editing and visibility", () => {
+  it("allows edit/delete only before the start time", () => {
+    expect(isEditable(boost, Date.parse("2026-10-18T23:59:00.000Z"))).toBe(true);
+    expect(isEditable(boost, Date.parse("2026-10-19T00:00:00.000Z"))).toBe(false);
+    expect(isEditable(goal, AFTER)).toBe(false);
+  });
+
+  it("hides a challenge from staff until it starts", () => {
+    expect(visibleToStaff(boost, Date.parse("2026-10-18T12:00:00.000Z"))).toBe(false);
+    expect(visibleToStaff(boost, Date.parse("2026-10-19T00:00:00.000Z"))).toBe(true);
+  });
+
+  it("shows boosted crowns as normal × multiplier = total", () => {
+    expect(boostMath(4, 2)).toBe("4 × 2 = 8");
+    expect(boostMath(2, 1.5)).toBe("2 × 1.5 = 3");
+  });
+});
+
+describe("Ended emails", () => {
+  const staff: Member[] = [
+    { id: "s1", name: "A", email: "a@x.com", role: "Staff", status: "Active" } as Member,
+    { id: "s2", name: "B", email: "b@x.com", role: "Staff", status: "Active" } as Member,
+  ];
+
+  it("E4 goes to all staff when a Boost ends", () => {
+    const e = buildBoostEndedEmail(boost, staff, boost.endAt);
+    expect(e.kind).toBe("E4");
+    expect(e.subject).toBe("Filling Week has ended");
+    expect(e.recipients).toEqual(["a@x.com", "b@x.com"]);
+  });
+
+  it("E5 for a Team Goal says no bonus and lists achieved / target", () => {
+    const closed = { ...goal, result: "ended_early" as const, achieved: { call: 30, claim: 4 } };
+    const e = buildEndedEarlyEmail(closed, tasks, staff, DURING);
+    expect(e.kind).toBe("E5");
+    expect(e.subject).toBe("Push has ended early");
+    expect(e.body.join(" ")).toContain("no bonus");
+    expect(e.body).toContain("call: 30 / 50");
+    expect(e.body).toContain("claim: 4 / 10");
+  });
+
+  it("E5 for a Boost says logs submitted before it ended still get extra crowns", () => {
+    const e = buildEndedEarlyEmail({ ...boost, result: "ended_early" }, tasks, staff, DURING);
+    expect(e.body.join(" ")).toContain("before it ended still get the extra crowns");
   });
 });

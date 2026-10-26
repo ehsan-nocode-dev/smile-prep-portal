@@ -40,9 +40,16 @@ describe("Challenge chip", () => {
     expect(s.upcoming).toHaveLength(0);
   });
 
-  it("shows a challenge starting within 24h only when nothing is live", () => {
+  it("shows admins a challenge starting within 24h only when nothing is live", () => {
     const soon = boost({ id: "b3", startAt: at(5), endAt: at(50) });
-    expect(challengeChip([soon], [], NOW)!.upcoming.map((c) => c.id)).toEqual(["b3"]);
+    const admin = { showUpcoming: true };
+    expect(challengeChip([soon], [], NOW, admin)!.upcoming.map((c) => c.id)).toEqual(["b3"]);
+    expect(challengeChip([soon, goal()], [], NOW, admin)!.upcoming).toHaveLength(0);
+  });
+
+  it("never shows staff a challenge before it starts", () => {
+    const soon = boost({ id: "b3", startAt: at(5), endAt: at(50) });
+    expect(challengeChip([soon], [], NOW)).toBeNull();
     expect(challengeChip([soon, goal()], [], NOW)!.upcoming).toHaveLength(0);
   });
 
